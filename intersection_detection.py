@@ -1,63 +1,63 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
-def detect_edges(frame):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
-    """
-    lower_yellow = np.array([0, 180, 180])
-    upper_yellow = np.array([179, 255, 255])
-    mask_yellow = cv2.inRange(hsv, lower_yellow, upper_yellow)
-    #mask_yellow = cv2.Canny(mask_yellow, 200, 400)
-    """
-    lower = np.array([90, 0, 180])
-    upper = np.array([170, 255, 255])
-    mask = cv2.inRange(hsv, lower, upper)
-    count_black = np.sum(mask <= 10)
-    w,h,_ = frame.shape
-    
-    if count_black > w*h*0.75:
-        lower = np.array([0, 0, 170])
-        upper = np.array([170, 255, 255])
-        mask = cv2.inRange(hsv, lower, upper)
-    
-    return mask
-
-
-def detect_intersection(frame):
-    #find if there is an intersection between at least two lines in the cropped frame
-    frame = cv2.resize(frame, (80, 60))
-
-    hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
-    #cv2.imshow('hsv', hsv)
-    mask = detect_edges(frame)
-    #cv2.imshow('mask', mask)
-    
-
-    # Noise reduction
-    line_segments = cv2.HoughLinesP(mask, 1, np.pi / 180, 10, np.array([]), minLineLength=10, maxLineGap=4)
-    #plt.imshow(dilated_mask)
-    #print(len(line_segments))
-    if line_segments is None:
+def process_image(image_path):
+    # Read the image
+    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    if img is None:
+        print(f"Image at {image_path} could not be loaded.")
         return False
-    #Compute angle between all detected lines and return True if one is greater than 80°
-    #range_i = np.random.randint(0, len(line_segments), 5)
 
-    for i in range(len(line_segemnt)):
-            for j in range(i+1, len(line_segment)):
-                x1,y1,x2,y2 = line_segment[i][0]
-                x3, y3, x4, y4 = line_segment[j][0]
-                
-                if x1 ==x2 or x3 == x4:
-                    continue
-                slope1= (y2-y1)/(x2-x1)
-                slope2= (y4 - y3)/(x4- x3)
-                
-                if abs(slope1 - slope2) >0.05:
-                    continue
-                if abs(x1-x3)<10 or abs(x2-x4)<10:
-                    angle= np.arctan2(np.abs(slope1-slope2),1+slope1*slope2)*180/np.pi
-                    if angle > 80:
-                        print("Intersection!")
-                        return True
-    return False
-                
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Threshold the image to find black regions
+    _, binary = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY_INV)
+    
+    # Detect contours
+    contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Create an output image to visualize
+    output_img = img.copy()
+    cv2.drawContours(output_img, contours, -1, (0, 255, 0), 2)
+    
+    # Analyze contours for intersections
+    intersection_detected = False
+    for contour in contours:
+        approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
+        if len(approx) > 4:  # Intersection typically has multiple connecting lines
+            intersection_detected = True
+            cv2.drawContours(output_img, [contour], -1, (255, 0, 0), 2)
+    
+    # Visualize the steps
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 3, 1)
+    plt.title("Original Image")
+    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+
+    plt.subplot(1, 3, 2)
+    plt.title("Binary Image")
+    plt.imshow(binary, cmap='gray')
+
+    plt.subplot(1, 3, 3)
+    plt.title("Processed Image")
+    plt.imshow(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
+    
+    plt.show()
+
+    return intersection_detected
+
+# Test with the provided images
+image_paths = [
+    "Generated_Images/test.png",
+    "Generated_Images/corner.jpeg",
+    "Generated_Images/straight_line.jpeg",
+    "Generated_Images/intersection.jpeg",
+    "Generated_Images/tjunct.jpeg",
+]
+
+for path in image_paths:
+    print(f"Processing {path}")
+    result = process_image(path)
+    print(f"Intersection Detected: {result}")
