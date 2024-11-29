@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import math
+from picamera2 import Picamera2
 # Input Image
 
 def return_angle(image):
@@ -70,13 +71,21 @@ def return_angle(image):
 
    
 def main():
+<<<<<<< HEAD
     # image_path = "Generated_Images/test.png"
     image_path = "Generated_Images/corner.jpeg"
     # image_path = "Generated_Images/straight_line.jpeg"
     # image_path = "Generated_Images/intersection.jpeg"
     # image_path = "Generated_Images/tjunct.jpeg"
+=======
+    picam2 = Picamera2()
+    picam2.start()
+
+
+    image_path = "Generated_Images/corner.jpeg"
+>>>>>>> db232fe8f2c9b67a20871af93c3bcfd1cab53598
     
-    image = cv2.imread(image_path)
+    image = picam2.capture_array()
     
     if image is None:
         print(f"Error: Unable to load the image from path '{image_path}'")
