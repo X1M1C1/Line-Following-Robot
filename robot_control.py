@@ -66,20 +66,18 @@ def right_wheel_rising_funct(gpio, level, tick):
     r_last_tick = tick
 
 def right_wheel_falling_funct(gpio, level, tick):
-    #if r_last_tick is not None:
-    time_diff = pigpio.tickDiff(r_last_tick, tick) # Time in milliseconds
-    duty = time_diff / 1100 # divided by 1.1ms
-    angle = 3.822 * (time_diff - 2.9)   # convert the pwm duty to angle, see datasheet
+    if r_last_tick is not None:
+        time_diff = pigpio.tickDiff(r_last_tick, tick) # Time in milliseconds
+        duty = time_diff / 11 # divided by 1.1ms
+        angle = 3.822 * (duty - 2.9)   # convert the pwm duty to angle, see datasheet
         
-    print(f"Angle: {angle:.2f}")
-
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.RISING_EDGE, right_wheel_rising_funct)
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.FALLING_EDGE, right_wheel_falling_funct)
 
 
 try:
     while True:
-        set_right_motor_speed(30)
+        set_right_motor_speed(10)
 except KeyboardInterrupt:
     pass
 finally:
