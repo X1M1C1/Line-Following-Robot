@@ -43,8 +43,8 @@ def hybrid_angle_detection(image):
     
     # Image dimensions
     h, w = image.shape[:2]
-    center_third_left = w // 3
-    center_third_right = 2 * (w // 3)
+    center_left = 2*w // 5
+    center_right =4  * (w // 5)
 
     # Calculate intersection with the bottom horizontal line
     if vy == 0:  # Avoid division by zero
@@ -53,7 +53,7 @@ def hybrid_angle_detection(image):
     bottom_intersection_x = int(x - (y / vy) * vx)
 
     # Check if the intersection is in the central third
-    if center_third_left <= bottom_intersection_x <= center_third_right:
+    if center_left <= bottom_intersection_x <= center_right:
         # Calculate the angle of the line relative to the vertical
         angle = math.atan2(vy, vx) * 180 / math.pi
         angle -= 90  # Adjust to make 0° vertical
