@@ -2,37 +2,52 @@ import RPi.GPIO as GPIO
 import time
 import pigpio
 
+#from intersection_detection_v7 import *
+from picamera2 import Picamera2
+from line_barycenter_detection import *
+
 # GPIO SETUP FOR SENSORS
-LEFT_WHEEL_PWM = 16
-RIGHT_WHEEL_PWM = 20
+LEFT_WHEEL_PWM = 12
+RIGHT_WHEEL_PWM = 13
 ULTRASONIC_TRIG = 26
 ULTRASONIC_ECHO = 19
-LEFT_WHEEL_ANGLE = 12
+LEFT_WHEEL_ANGLE = 16
 RIGHT_WHEEL_ANGLE = 21
 
 pi = pigpio.pi()
+picam2 = Picamera2()
+
+camera_config = picam2.create_preview_configuration(main={"size": (640, 480)})
+picam2.configure(camera_config)
+picam2.start()
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(LEFT_WHEEL_PWM, GPIO.OUT)
-GPIO.setup(RIGHT_WHEEL_PWM, GPIO.OUT)
+pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
+pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
+#GPIO.setup(LEFT_WHEEL_PWM, GPIO.OUT)
+#GPIO.setup(RIGHT_WHEEL_PWM, GPIO.OUT)
 GPIO.setup(ULTRASONIC_TRIG, GPIO.OUT)
 GPIO.setup(ULTRASONIC_ECHO, GPIO.IN)
 
-pwm_left = GPIO.PWM(LEFT_WHEEL_PWM, 50)
-pwm_right = GPIO.PWM(RIGHT_WHEEL_PWM, 50)
-pwm_left.start(50)
-pwm_right.start(50)
+#pwm_left = GPIO.PWM(LEFT_WHEEL_PWM, 50)
+#pwm_right = GPIO.PWM(RIGHT_WHEEL_PWM, 50)
+#pwm_left.start(50)
+#pwm_right.start(50)
 
 # input is a int from -100 to 100
 def set_right_motor_speed(input_speed):
-    scaled = -0.011 * (input_speed + 100) + 8.6
+    scaled = -0.011 * (input_speed) + 7.5
     print("Right Motor Control: %d", scaled)
-    pwm_right.ChangeDutyCycle(scaled)
+    scaled = scaled * 10000
+    pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, round(scaled))
+    #pwm_right.ChangeDutyCycle(scaled)
 
 def set_left_motor_speed(input_speed):
-    scaled = 0.011 * (input_speed + 100) + 6.4
+    scaled = 0.011 * (input_speed) + 7.5
     print("Left Motor Control: %d", scaled)
-    pwm_left.ChangeDutyCycle(scaled)
+    scaled = scaled * 10000
+    pi.hardware_PWM(LEFT_WHEEL_PWM, 50, round(scaled))
+    #pwm_left.ChangeDutyCycle(scaled)
     # stop is 7.5
     # full bore is 8.6
     # reverse is 6.4
@@ -64,7 +79,7 @@ r_last_tick = None
 r_high_time = 0
 r_frequency = 0
 def right_wheel_rising_funct(gpio, level, tick):
-    global r_last_tick, r_high_time, r_frequency
+    global r_last_tick
     r_last_tick = tick
 
 def right_wheel_falling_funct(gpio, level, tick):
@@ -78,23 +93,33 @@ pi.callback(RIGHT_WHEEL_ANGLE, pigpio.FALLING_EDGE, right_wheel_falling_funct)
 
 def move_forward():
     set_left_motor_speed(25)
-    set_right_motor_speed(95)
+    set_right_motor_speed(25)
 
-def move_left():
-    set_left_motor_speed(-25)
-    set_right_motor_speed(95)
+def turn_left():
+    set_left_motor_speed(-100)
+    set_right_motor_speed(100)
 
-def move_right():
-    set_left_motor_speed(25)
-    set_right_motor_speed(-95)
+def turn_right():
+    set_left_motor_speed(12)
+    set_right_motor_speed(-50)
 
 try:
+    frame = picam2.capture_array() 
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
+    angle = return_angle(frame)
+    print(angle)
+    time.sleep(0.5)
+    #cv2.imwrite('test.jpg', frame)
+    
+
+
     while True:
-        move_right()
-        time.sleep(20)
+        move_forward()
         
 except KeyboardInterrupt:
     pass
 finally:
+    pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
+    pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
     pi.stop()
     GPIO.cleanup()
