@@ -25,15 +25,17 @@ pwm_right.start(50)
 
 # input is a int from -100 to 100
 def set_right_motor_speed(input_speed):
-    scaled = 0.011 * (input_speed + 100) + 6.4
+    scaled = -0.011 * (input_speed + 100) + 8.6
+    print("Right Motor Control: %d", scaled)
     pwm_right.ChangeDutyCycle(scaled)
-    # stop is 7.5
-    # full bore is 8.6
-    # reverse is 6.4
 
 def set_left_motor_speed(input_speed):
     scaled = 0.011 * (input_speed + 100) + 6.4
+    print("Left Motor Control: %d", scaled)
     pwm_left.ChangeDutyCycle(scaled)
+    # stop is 7.5
+    # full bore is 8.6
+    # reverse is 6.4
 
 # distance is in cm
 def get_distance():
@@ -74,10 +76,23 @@ def right_wheel_falling_funct(gpio, level, tick):
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.RISING_EDGE, right_wheel_rising_funct)
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.FALLING_EDGE, right_wheel_falling_funct)
 
+def move_forward():
+    set_left_motor_speed(25)
+    set_right_motor_speed(95)
+
+def move_left():
+    set_left_motor_speed(-25)
+    set_right_motor_speed(95)
+
+def move_right():
+    set_left_motor_speed(25)
+    set_right_motor_speed(-95)
 
 try:
     while True:
-        set_right_motor_speed(10)
+        move_right()
+        time.sleep(20)
+        
 except KeyboardInterrupt:
     pass
 finally:
