@@ -3,18 +3,18 @@ import numpy as np
 import math
 import os
 
-def identify_black_barycenter(image):
+def process_image(image):
     """
-    Identifies the outlines of black regions in the image and calculates the barycenter of the largest black region.
-    Draws debugging outlines and the barycenter for visualization.
+    Processes an input image to identify the largest black region, calculate its barycenter,
+    determine the angle from vertical, and visualize the result.
 
     Args:
         image (numpy.ndarray): Input image (assumed to be in BGR format).
-    
+
     Returns:
-        barycenter (tuple): Coordinates of the barycenter (x, y) of the largest black region.
-        outlined_image (numpy.ndarray): Image with outlines and barycenter drawn for debugging.
-        None, None: If no valid black region is detected.
+        angle_from_vertical (float): Angle in degrees between the line from the bottom center
+                                     to the barycenter and the vertical line.
+        image_with_lines (numpy.ndarray): Image with lines and angle visualization.
     """
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -27,14 +27,16 @@ def identify_black_barycenter(image):
 
     if not contours:
         # If no contours are found, return None
+        print("No valid black region detected!")
         return None, image
 
-    # Find the largest contour, assuming it's the primary black region of interest
+    # Find the largest contour
     largest_contour = max(contours, key=cv2.contourArea)
 
     # Calculate the moments of the largest contour
     moments = cv2.moments(largest_contour)
     if moments["m00"] == 0:  # Prevent division by zero
+        print("Invalid region detected (zero area)!")
         return None, image
 
     # Calculate the barycenter (center of mass) of the black region
@@ -42,36 +44,23 @@ def identify_black_barycenter(image):
     cy = int(moments["m01"] / moments["m00"])
     barycenter = (cx, cy)
 
-    # Draw the contours and the barycenter on the image for debugging
-    outlined_image = image.copy()
-    cv2.drawContours(outlined_image, [largest_contour], -1, (0, 255, 0), 2)  # Draw contour in green
-    cv2.circle(outlined_image, barycenter, 5, (0, 0, 255), -1)  # Draw barycenter in red
+    # Prepare image for visualization
+    image_with_lines = image.copy()
 
-    return barycenter, outlined_image
+    # Draw the largest contour and the barycenter
+    cv2.drawContours(image_with_lines, [largest_contour], -1, (0, 255, 0), 2)  # Contour in green
+    cv2.circle(image_with_lines, barycenter, 5, (0, 0, 255), -1)  # Barycenter in red
 
-def calculate_angle_and_draw(image, barycenter):
-    """
-    Calculates the angle between the line from the bottom-center of the image to the barycenter
-    and the vertical line passing through the image center.
-
-    Args:
-        image (numpy.ndarray): Input image.
-        barycenter (tuple): Coordinates of the barycenter.
-
-    Returns:
-        angle (float): Angle in degrees between the two lines.
-        image_with_lines (numpy.ndarray): Image with lines and angle visualization.
-    """
+    # Image dimensions
     height, width, _ = image.shape
 
-    # Center of the bottom edge
+    # Bottom center of the image
     bottom_center = (width // 2, height - 1)
 
     # Center of the image (for the vertical line)
     image_center = (width // 2, height // 2)
 
     # Draw the vertical line for reference
-    image_with_lines = image.copy()
     cv2.line(image_with_lines, image_center, bottom_center, (255, 0, 0), 2)  # Vertical line in blue
 
     # Draw the line from the bottom center to the barycenter
@@ -81,7 +70,7 @@ def calculate_angle_and_draw(image, barycenter):
     dx = barycenter[0] - bottom_center[0]
     dy = bottom_center[1] - barycenter[1]  # Inverted y-axis for proper angle calculation
 
-    # Vertical line direction is (0, -1), compute the angle with respect to this vector
+    # Calculate the angle from vertical
     angle = math.degrees(math.atan2(dy, dx))
     angle_from_vertical = 90 - angle  # Convert to angle from the vertical line
 
@@ -118,20 +107,16 @@ def process_images_debug(directory_path):
             print(f"Failed to load image: {image_file}")
             continue
 
-        barycenter, outlined_image = identify_black_barycenter(image)
+        print(f"Processing {image_file}...")
+        angle, result_image = process_image(image)
 
-        if barycenter:
-            print(f"{image_file}: Barycenter = {barycenter}")
-
-            # Calculate the angle and visualize lines
-            angle, result_image = calculate_angle_and_draw(outlined_image, barycenter)
+        if angle is not None:
             print(f"{image_file}: Angle from vertical = {angle:.2f}°")
         else:
             print(f"{image_file}: No valid black region detected!")
-            result_image = outlined_image
 
         # Display the result image
-        cv2.imshow("Result Image", result_image)
+        cv2.imshow(f"Result - {image_file}", result_image)
 
         # Wait until the window is closed
         cv2.waitKey(0)
