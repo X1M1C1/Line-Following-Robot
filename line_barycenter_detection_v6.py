@@ -16,6 +16,13 @@ def hybrid_angle_detection(image):
         angle (float): The angle in degrees. Negative for left turns, positive for right turns.
         processed_image (numpy.ndarray): Image with visualization.
     """
+    
+    # Determine the height of the image
+    height, width = image.shape[:2]
+
+    # Crop the top third of the image
+    image = image[height // 3 :, :]
+
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
