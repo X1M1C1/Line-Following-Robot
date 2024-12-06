@@ -1,2 +1,5 @@
-__pycache__/intersection_detection_v7.cpython-39.pyc
-__pycache__/line_barycenter_detection.cpython-39.pyc
+__pycache__/*.pyc
+test.png
+ultrasonic_test.py
+motor_test.py
+camera_test.py

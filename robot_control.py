@@ -4,7 +4,7 @@ import pigpio
 
 #from intersection_detection_v7 import *
 from picamera2 import Picamera2
-from line_barycenter_detection import *
+from line_barycenter_detection_v6 import *
 
 # GPIO SETUP FOR SENSORS
 LEFT_WHEEL_PWM = 12
@@ -36,15 +36,15 @@ GPIO.setup(ULTRASONIC_ECHO, GPIO.IN)
 
 # input is a int from -100 to 100
 def set_right_motor_speed(input_speed):
-    scaled = -0.011 * (input_speed) + 7.5
-    print("Right Motor Control: %d", scaled)
+    scaled = 0.011 * (input_speed) + 7.5
+    #print("Right Motor Control: %d", scaled)
     scaled = scaled * 10000
     pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, round(scaled))
     #pwm_right.ChangeDutyCycle(scaled)
 
 def set_left_motor_speed(input_speed):
-    scaled = 0.011 * (input_speed) + 7.5
-    print("Left Motor Control: %d", scaled)
+    scaled = -0.011 * (input_speed) + 7.5
+    #print("Left Motor Control: %d", scaled)
     scaled = scaled * 10000
     pi.hardware_PWM(LEFT_WHEEL_PWM, 50, round(scaled))
     #pwm_left.ChangeDutyCycle(scaled)
@@ -95,30 +95,48 @@ def move_forward():
     set_left_motor_speed(25)
     set_right_motor_speed(25)
 
-def turn_left():
-    set_left_motor_speed(-100)
-    set_right_motor_speed(100)
-
 def turn_right():
-    set_left_motor_speed(12)
-    set_right_motor_speed(-50)
+    set_left_motor_speed(-15)
+    set_right_motor_speed(15)
+
+def turn_left():
+    set_left_motor_speed(15)
+    set_right_motor_speed(-15)
 
 try:
-    frame = picam2.capture_array() 
-    frame = cv2.rotate(frame, cv2.ROTATE_180)
-    angle = return_angle(frame)
-    print(angle)
-    time.sleep(0.5)
-    #cv2.imwrite('test.jpg', frame)
-    
-
-
+    past_dir = 'R'
     while True:
-        move_forward()
+        frame = picam2.capture_array() 
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
+
+        angle, img, is_line = hybrid_angle_detection(frame)
+        
+        print(angle, " ", is_line)
+        if angle is None:
+            if (past_dir == 'R'):
+                turn_left()
+            else:
+                turn_right()
+        else:
+            if (angle > 10):
+                turn_right()
+                past_dir = 'R'
+            elif (angle < -10):
+                turn_left()
+                past_dir = 'L'
+            else:
+                move_forward()
+        time.sleep(0.2)
         
 except KeyboardInterrupt:
     pass
 finally:
+    frame = picam2.capture_array() 
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
+    angle, img, is_line = hybrid_angle_detection(frame)
+
+    cv2.imwrite("test.png",img)
+
     pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
     pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
     pi.stop()
