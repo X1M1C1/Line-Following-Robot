@@ -5,6 +5,7 @@ import pigpio
 #from intersection_detection_v7 import *
 from picamera2 import Picamera2
 from line_barycenter_detection_v6 import *
+from intersection_detection_v7 import *
 
 # GPIO SETUP FOR SENSORS
 LEFT_WHEEL_PWM = 12
@@ -110,8 +111,9 @@ try:
         frame = cv2.rotate(frame, cv2.ROTATE_180)
 
         angle, img, is_line = hybrid_angle_detection(frame)
-        
-        print(angle, " ", is_line)
+        is_intersection = process_image(frame)
+
+        print(angle, " ", is_line, " ", is_intersection)
         if angle is None:
             if (past_dir == 'R'):
                 turn_left()
@@ -131,13 +133,15 @@ try:
 except KeyboardInterrupt:
     pass
 finally:
+    pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
+    pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
+
     frame = picam2.capture_array() 
     frame = cv2.rotate(frame, cv2.ROTATE_180)
     angle, img, is_line = hybrid_angle_detection(frame)
+    cv2.imwrite("test_line.png", img)
+    cv2.imwrite("test_raw.png", frame)
 
-    cv2.imwrite("test.png",img)
 
-    pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
-    pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
     pi.stop()
     GPIO.cleanup()

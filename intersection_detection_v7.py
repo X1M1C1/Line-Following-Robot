@@ -1,12 +1,15 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import os 
 
-def process_image(image_path, blur_kernel_size=(105, 105)):#(50,05)
+def process_image(img, blur_kernel_size=(105, 105)):#(50,05)
     # Read the image
-    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    #img = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
+    h, w = img.shape[:2]
+    img = img[h // 3 :, :]
+    
     if img is None:
         print(f"Image at {image_path} could not be loaded.")
         return False
@@ -48,20 +51,20 @@ def process_image(image_path, blur_kernel_size=(105, 105)):#(50,05)
             cv2.drawContours(output_img, [contour], -1, (255, 0, 0), 2)
     
     # Visualize the steps
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 3, 1)
-    plt.title("Original Image")
-    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    # plt.figure(figsize=(12, 6))
+    # plt.subplot(1, 3, 1)
+    # plt.title("Original Image")
+    # plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-    plt.subplot(1, 3, 2)
-    plt.title("Blurred & Binary Image")
-    plt.imshow(binary, cmap='gray')
+    # plt.subplot(1, 3, 2)
+    # plt.title("Blurred & Binary Image")
+    # plt.imshow(binary, cmap='gray')
 
-    plt.subplot(1, 3, 3)
-    plt.title("Processed Image")
-    plt.imshow(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
+    # plt.subplot(1, 3, 3)
+    # plt.title("Processed Image")
+    # plt.imshow(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
     
-    plt.show()
+    # plt.show()
 
     return intersection_detected
 
@@ -85,5 +88,5 @@ def process_images_in_directory(directory_path):
 
 # Example Usage
 #directory_path = "Generated_Images"  # Change to your directory path
-directory_path = "Test_Images"  # Change to your directory path
-process_images_in_directory(directory_path)
+#directory_path = "Test_Images"  # Change to your directory path
+#process_images_in_directory(directory_path)

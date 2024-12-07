@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def process_image(image_path):
+def process_image(img):
     # Read the image
-    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    # img = cv2.imread(image_path, cv2.IMREAD_COLOR)
     if img is None:
         print(f"Image at {image_path} could not be loaded.")
         return False
@@ -31,20 +31,20 @@ def process_image(image_path):
             cv2.drawContours(output_img, [contour], -1, (255, 0, 0), 2)
     
     # Visualize the steps
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 3, 1)
-    plt.title("Original Image")
-    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    # plt.figure(figsize=(12, 6))
+    # plt.subplot(1, 3, 1)
+    # plt.title("Original Image")
+    # plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-    plt.subplot(1, 3, 2)
-    plt.title("Binary Image")
-    plt.imshow(binary, cmap='gray')
+    # plt.subplot(1, 3, 2)
+    # plt.title("Binary Image")
+    # plt.imshow(binary, cmap='gray')
 
-    plt.subplot(1, 3, 3)
-    plt.title("Processed Image")
-    plt.imshow(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
+    # plt.subplot(1, 3, 3)
+    # plt.title("Processed Image")
+    # plt.imshow(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
     
-    plt.show()
+    # plt.show()
 
     return intersection_detected
 

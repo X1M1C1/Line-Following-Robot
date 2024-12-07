@@ -48,7 +48,7 @@ def hybrid_angle_detection(image):
 
     # Calculate intersection with the bottom horizontal line
     if vy == 0:  # Avoid division by zero
-        return None, image
+        return None, image, None
 
     bottom_intersection_x = int(x - (y / vy) * vx)
     
