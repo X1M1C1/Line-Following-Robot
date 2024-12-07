@@ -118,10 +118,10 @@ try:
             else:
                 turn_right()
         else:
-            if (angle > 10):
+            if (angle > 20):
                 turn_right()
                 past_dir = 'R'
-            elif (angle < -10):
+            elif (angle < -20):
                 turn_left()
                 past_dir = 'L'
             else:

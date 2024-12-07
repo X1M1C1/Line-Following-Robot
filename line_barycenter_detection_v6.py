@@ -55,8 +55,11 @@ def hybrid_angle_detection(image):
     # Calculate if the intersection is in the lower half of the image
     line_intersection_in_lower_half = y >= (h // 2)
     
+
+    is_line = False
     # Check if the intersection is in the central third and in the lower half
     if (center_left <= bottom_intersection_x <= center_right) and line_intersection_in_lower_half:
+        is_line = True
         # Calculate the angle of the line relative to the vertical
         angle = math.atan2(vy, vx) * 180 / math.pi
         angle -= 90  # Adjust to make 0° vertical
@@ -97,7 +100,7 @@ def hybrid_angle_detection(image):
         cv2.putText(processed_image, f"Angle: {angle_from_vertical:.2f}°", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         angle = angle_from_vertical
 
-    return angle, processed_image
+    return angle, processed_image, is_line
 
 def process_images(directory_path):
     """
