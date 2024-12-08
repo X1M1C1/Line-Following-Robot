@@ -77,17 +77,17 @@ def get_distance():
     return distance
 
 r_last_tick = None
-r_left_angle = None
+r_right_angle = None
 def right_wheel_rising_funct(gpio, level, tick):
     global r_last_tick
     r_last_tick = tick
 
 def right_wheel_falling_funct(gpio, level, tick):
-    global r_left_angle
+    global r_right_angle
     if r_last_tick is not None:
         time_diff = pigpio.tickDiff(r_last_tick, tick) # Time in milliseconds
         duty = time_diff / 11 # divided by 1.1ms
-        r_left_angle = 3.822 * (duty - 2.9)   # convert the pwm duty to angle, see datasheet
+        r_right_angle = 3.822 * (duty - 2.9)   # convert the pwm duty to angle, see datasheet
         
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.RISING_EDGE, right_wheel_rising_funct)
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.FALLING_EDGE, right_wheel_falling_funct)
@@ -105,10 +105,10 @@ def turn_left():
     set_right_motor_speed(-15)
 
 def move_forward_6in(detect_angle):
-    global r_left_angle, past_dir
-    start_angle = r_left_angle
+    global r_right_angle, past_dir
+    start_angle = r_right_angle
             #if start angle < 90                                   # if start angke >= 90       #greater than angle          #handle wraparound
-    while ((start_angle < 90 and r_left_angle < start_angle + 270) or (start_angle >= 90 and (r_left_angle > start_angle or r_left_angle < start_angle - 90))):
+    while ((start_angle < 90 and r_right_angle < start_angle + 270) or (start_angle >= 90 and (r_right_angle > start_angle or r_right_angle < start_angle - 90))):
         # picture
         frame = picam2.capture_array() 
         frame = cv2.rotate(frame, cv2.ROTATE_180)
@@ -117,7 +117,7 @@ def move_forward_6in(detect_angle):
         detect_angle, img, is_line = hybrid_angle_detection(frame)
         is_intersection = process_image(frame)
 
-        print(detect_angle, " ", start_angle, " ", r_left_angle)
+        print(detect_angle, " ", start_angle, " ", r_right_angle)
 
         # overshoot protection
         if detect_angle is None:
@@ -139,39 +139,50 @@ def move_forward_6in(detect_angle):
 
 def turn_right_90deg():
     print("STARTING RIGHT TURN")
-    global r_left_angle
-    start_angle = r_left_angle
+    global r_right_angle
+    start_angle = r_right_angle
     set_left_motor_speed(-15)
     set_right_motor_speed(15)
 
-    while ((start_angle < 90 and r_left_angle < start_angle + 270) or (start_angle >= 90 and (r_left_angle > start_angle or r_left_angle < start_angle - 90))):
+    while ((start_angle < 90 and r_right_angle < start_angle + 270) or (start_angle >= 90 and (r_right_angle > start_angle or r_right_angle < start_angle - 90))):
         pass
     print("COMPLETED RIGHT TURN")
+
+def turn_left_90deg():
+    print("STARTING LEFT TURN")
+    global r_right_angle
+    start_angle = r_right_angle
+    set_left_motor_speed(15)
+    set_right_motor_speed(-15)
+
+    while ((start_angle > 270 and r_right_angle > start_angle - 270) or (start_angle <= 270 and (r_right_angle < start_angle or r_right_angle > start_angle + 90))):
+        pass
+    print("COMPLETED LEFT TURN")
 
 past_dir = 'R'
 try:
     time.sleep(2)
 
     while True:
-        # take picture and rotate
+        #take picture and rotate
         frame = picam2.capture_array() 
         frame = cv2.rotate(frame, cv2.ROTATE_180)
 
-        # do detection
+        #do detection
         detect_angle, img, is_line = hybrid_angle_detection(frame)
         is_intersection = process_image(frame)
 
         
-        # debug trace
-        #print(detect_angle, " ", is_intersection, " ", r_left_angle)
+        #debug trace
+        #print(detect_angle, " ", is_intersection, " ", r_right_angle)
 
-        # intersection loop
+        #intersection loop
         if is_intersection:
             print("ENTERING INTERSECTION BLOCK")
             move_forward_6in(detect_angle)
             print("LEAVING INTERSECTION BLOCK")
-            
-        # general line followerer
+
+        #general line followerer
         else:
             # overshoot protection
             if detect_angle is None:
@@ -189,7 +200,7 @@ try:
                     past_dir = 'L'
                 else:
                     move_forward()
-        # general sleep timer
+        #general sleep timer
         time.sleep(0.2)
         
 except KeyboardInterrupt:
