@@ -77,17 +77,17 @@ def get_distance():
     return distance
 
 r_last_tick = None
-r_high_time = 0
-r_frequency = 0
+r_left_angle = None
 def right_wheel_rising_funct(gpio, level, tick):
     global r_last_tick
     r_last_tick = tick
 
 def right_wheel_falling_funct(gpio, level, tick):
+    global r_left_angle
     if r_last_tick is not None:
         time_diff = pigpio.tickDiff(r_last_tick, tick) # Time in milliseconds
         duty = time_diff / 11 # divided by 1.1ms
-        angle = 3.822 * (duty - 2.9)   # convert the pwm duty to angle, see datasheet
+        r_left_angle = 3.822 * (duty - 2.9)   # convert the pwm duty to angle, see datasheet
         
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.RISING_EDGE, right_wheel_rising_funct)
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.FALLING_EDGE, right_wheel_falling_funct)
@@ -104,30 +104,92 @@ def turn_left():
     set_left_motor_speed(15)
     set_right_motor_speed(-15)
 
-try:
-    past_dir = 'R'
-    while True:
+def move_forward_6in(detect_angle):
+    global r_left_angle, past_dir
+    start_angle = r_left_angle
+            #if start angle < 90                                   # if start angke >= 90       #greater than angle          #handle wraparound
+    while ((start_angle < 90 and r_left_angle < start_angle + 270) or (start_angle >= 90 and (r_left_angle > start_angle or r_left_angle < start_angle - 90))):
+        # picture
         frame = picam2.capture_array() 
         frame = cv2.rotate(frame, cv2.ROTATE_180)
 
-        angle, img, is_line = hybrid_angle_detection(frame)
+        # do detection
+        detect_angle, img, is_line = hybrid_angle_detection(frame)
         is_intersection = process_image(frame)
 
-        print(angle, " ", is_line, " ", is_intersection)
-        if angle is None:
+        print(detect_angle, " ", start_angle, " ", r_left_angle)
+
+        # overshoot protection
+        if detect_angle is None:
             if (past_dir == 'R'):
                 turn_left()
             else:
                 turn_right()
+        #normal line following
         else:
-            if (angle > 20):
+            if (detect_angle > 20):
                 turn_right()
                 past_dir = 'R'
-            elif (angle < -20):
+            elif (detect_angle < -20):
                 turn_left()
                 past_dir = 'L'
             else:
                 move_forward()
+        time.sleep(0.2)
+
+def turn_right_90deg():
+    print("STARTING RIGHT TURN")
+    global r_left_angle
+    start_angle = r_left_angle
+    set_left_motor_speed(-15)
+    set_right_motor_speed(15)
+
+    while ((start_angle < 90 and r_left_angle < start_angle + 270) or (start_angle >= 90 and (r_left_angle > start_angle or r_left_angle < start_angle - 90))):
+        pass
+    print("COMPLETED RIGHT TURN")
+
+past_dir = 'R'
+try:
+    time.sleep(2)
+
+    while True:
+        # take picture and rotate
+        frame = picam2.capture_array() 
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
+
+        # do detection
+        detect_angle, img, is_line = hybrid_angle_detection(frame)
+        is_intersection = process_image(frame)
+
+        
+        # debug trace
+        #print(detect_angle, " ", is_intersection, " ", r_left_angle)
+
+        # intersection loop
+        if is_intersection:
+            print("ENTERING INTERSECTION BLOCK")
+            move_forward_6in(detect_angle)
+            print("LEAVING INTERSECTION BLOCK")
+            
+        # general line followerer
+        else:
+            # overshoot protection
+            if detect_angle is None:
+                if (past_dir == 'R'):
+                    turn_left()
+                else:
+                    turn_right()
+            #normal line following
+            else:
+                if (detect_angle > 20):
+                    turn_right()
+                    past_dir = 'R'
+                elif (detect_angle < -20):
+                    turn_left()
+                    past_dir = 'L'
+                else:
+                    move_forward()
+        # general sleep timer
         time.sleep(0.2)
         
 except KeyboardInterrupt:

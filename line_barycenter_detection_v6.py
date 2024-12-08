@@ -33,7 +33,7 @@ def hybrid_angle_detection(image):
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
-        return None, image  # No contours found
+        return None, image, False # No contours found
 
     # Find the largest contour
     largest_contour = max(contours, key=cv2.contourArea)
