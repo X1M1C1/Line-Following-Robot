@@ -66,7 +66,7 @@ def process_image(img, blur_kernel_size=(105, 105)):#(50,05)
     
     # plt.show()
 
-    return intersection_detected
+    return intersection_detected, output_img
 
 
 # Function to process all images in a directory

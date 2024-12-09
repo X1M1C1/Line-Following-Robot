@@ -129,26 +129,26 @@ def move_forward_6in():
     global r_right_angle, past_dir
     start_angle = r_right_angle
     # angle increases
-    
+    time.sleep(0.1)
     move_forward()
     time.sleep(0.1)
     if (start_angle < WHEEL_ROTATION_LOOPOVER_FORW): 
-        print("A", r_right_angle, " ", start_angle)
+        #print("A", r_right_angle, " ", start_angle)
         while (r_right_angle < start_angle + WHEEL_ROTATION_NEEDED_FORW):
-            print("B", r_right_angle, " ", start_angle)
+            #print("B", r_right_angle, " ", start_angle)
             do_detect()
             line_follow()
             time.sleep(0.01)
     else: #start_angle <= WHEEL_ROTATION_NEEDED_FORW
-        print("C", r_right_angle, " ", start_angle)
+        #print("C", r_right_angle, " ", start_angle)
         while (r_right_angle > start_angle):
-            print("D", r_right_angle, " ", start_angle)
+            #print("D", r_right_angle, " ", start_angle)
             do_detect()
             line_follow()
             time.sleep(0.01)
         time.sleep(0.01)
         while (r_right_angle < start_angle - WHEEL_ROTATION_LOOPOVER_FORW):
-            print("E", r_right_angle, " ", start_angle)
+            #print("E", r_right_angle, " ", start_angle)
             do_detect()
             line_follow()
             time.sleep(0.01)
@@ -160,6 +160,7 @@ WHEEL_ROTATION_LOOPOVER_TURN = 360 - WHEEL_ROTATION_NEEDED_TURN
 # turns 90 degrees right
 # this is blocking
 def turn_right_90deg():
+    time.sleep(0.1)
     # angle decreases
     # only need to turn wheel 180 deg
     print("STARTING RIGHT TURN")
@@ -224,18 +225,19 @@ def do_detect():
     frame = picam2.capture_array() 
     frame = cv2.rotate(frame, cv2.ROTATE_180)
 
+    global detect_angle, is_intersection
     #do detection
     detect_angle, img, is_line = hybrid_angle_detection(frame)
-    is_intersection = process_image(frame)
+    is_intersection, intersection_img = process_image(frame)
 
-    return img, is_line
+    return img, is_line, intersection_img
     # returns a bunch of debug info
 
 # used in overshoot protection
 past_dir = 'R'
 # line following function using the global detect_angle
 def line_follow():
-    global detect_angle
+    global detect_angle, past_dir
     if detect_angle is None:
         if (past_dir == 'R'):
             turn_left()
@@ -255,18 +257,22 @@ def line_follow():
 
 try:
     time.sleep(1)
-
-    move_forward_6in()
-    # while True:
-    #     do_detect()
+    i = 0
+    while True:
+        line_img, is_line, intersection_img = do_detect()
         
-    #     if is_intersection:
-    #         print("ENTERING INTERSECTION BLOCK")
-    #         move_forward_6in(detect_angle)
-    #         print("LEAVING INTERSECTION BLOCK")
-    #     else:
-    #         line_follow()
-    #     time.sleep(0.2)
+        if is_intersection:
+            print("ENTERING INTERSECTION BLOCK")
+            cv2.imwrite("intersect_"+str(i)+".png", intersection_img)
+            i += 1
+            move_forward_6in()
+            print("STARTING TURN")
+            turn_right_90deg()
+            print("LEAVING INTERSECTION BLOCK")
+        else:
+            print("FOLLOWING")
+            line_follow()
+        time.sleep(0.2) 
         
 except KeyboardInterrupt:
     pass
