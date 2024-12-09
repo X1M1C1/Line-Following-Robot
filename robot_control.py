@@ -7,7 +7,7 @@ from picamera2 import Picamera2
 from line_barycenter_detection_v6 import *
 from intersection_detection_v7 import *
 
-# GPIO SETUP FOR SENSORS
+# GPIO PINS
 LEFT_WHEEL_PWM = 12
 RIGHT_WHEEL_PWM = 13
 ULTRASONIC_TRIG = 26
@@ -15,6 +15,7 @@ ULTRASONIC_ECHO = 19
 LEFT_WHEEL_ANGLE = 16
 RIGHT_WHEEL_ANGLE = 21
 
+# start all the prereq stuff
 pi = pigpio.pi()
 picam2 = Picamera2()
 
@@ -22,20 +23,16 @@ camera_config = picam2.create_preview_configuration(main={"size": (640, 480)})
 picam2.configure(camera_config)
 picam2.start()
 
+# configure GPIOs
 GPIO.setmode(GPIO.BCM)
 pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
 pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
-#GPIO.setup(LEFT_WHEEL_PWM, GPIO.OUT)
-#GPIO.setup(RIGHT_WHEEL_PWM, GPIO.OUT)
 GPIO.setup(ULTRASONIC_TRIG, GPIO.OUT)
 GPIO.setup(ULTRASONIC_ECHO, GPIO.IN)
 
-#pwm_left = GPIO.PWM(LEFT_WHEEL_PWM, 50)
-#pwm_right = GPIO.PWM(RIGHT_WHEEL_PWM, 50)
-#pwm_left.start(50)
-#pwm_right.start(50)
 
 # input is a int from -100 to 100
+# sets the right motor to a certain power lvl
 def set_right_motor_speed(input_speed):
     scaled = 0.011 * (input_speed) + 7.5
     #print("Right Motor Control: %d", scaled)
@@ -43,6 +40,7 @@ def set_right_motor_speed(input_speed):
     pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, round(scaled))
     #pwm_right.ChangeDutyCycle(scaled)
 
+# sets the left motor to a certain power lvl
 def set_left_motor_speed(input_speed):
     scaled = -0.011 * (input_speed) + 7.5
     #print("Left Motor Control: %d", scaled)
@@ -54,6 +52,7 @@ def set_left_motor_speed(input_speed):
     # reverse is 6.4
 
 # distance is in cm
+# sends and receieves a ping from the ultrasonic sensor
 def get_distance():
     # Send a pulse to the TRIG pin
     GPIO.output(ULTRASONIC_TRIG, GPIO.LOW)
@@ -78,32 +77,51 @@ def get_distance():
 
 r_last_tick = None
 r_right_angle = None
+# this callback sets the timestamp of the rising edge of the right wheel angle PWM
 def right_wheel_rising_funct(gpio, level, tick):
     global r_last_tick
     r_last_tick = tick
 
+# this callback calculates the PWM duty of the right wheel angle
+# using the earlier callback data
 def right_wheel_falling_funct(gpio, level, tick):
     global r_right_angle
     if r_last_tick is not None:
         time_diff = pigpio.tickDiff(r_last_tick, tick) # Time in milliseconds
         duty = time_diff / 11 # divided by 1.1ms
         r_right_angle = 3.822 * (duty - 2.9)   # convert the pwm duty to angle, see datasheet
-        
+
+# setting up callbacks
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.RISING_EDGE, right_wheel_rising_funct)
 pi.callback(RIGHT_WHEEL_ANGLE, pigpio.FALLING_EDGE, right_wheel_falling_funct)
 
+# sets the wheels to move forwards
+# is not blocking
 def move_forward():
     set_left_motor_speed(25)
     set_right_motor_speed(25)
 
+# stops moving
+# is not blocking
+def stop_moving():
+    set_left_motor_speed(0)
+    set_right_motor_speed(0)
+
+# sets the wheels to turn right
+# is not blocking
 def turn_right():
     set_left_motor_speed(-15)
     set_right_motor_speed(15)
 
+# sets the wheels to turn left
+# is not blocking
 def turn_left():
     set_left_motor_speed(15)
     set_right_motor_speed(-15)
 
+# moves forwards 6in
+# this is the distance between the center of the axles, and where an intersection is detected
+# this is blocking
 def move_forward_6in(detect_angle):
     global r_right_angle, past_dir
     start_angle = r_right_angle
@@ -137,26 +155,61 @@ def move_forward_6in(detect_angle):
                 move_forward()
         time.sleep(0.2)
 
+# variables for how much the right wheel needs to rotate to do a 90 degree turn
+WHEEL_ROTATION_NEEDED = 180
+WHEEL_ROTATION_LOOPOVER = 360 - WHEEL_ROTATION_NEEDED
+# turns 90 degrees right
+# this is blocking
 def turn_right_90deg():
+    # angle decreases
+    # only need to turn wheel 180 deg
     print("STARTING RIGHT TURN")
     global r_right_angle
     start_angle = r_right_angle
-    set_left_motor_speed(-15)
-    set_right_motor_speed(15)
+    turn_right()
 
-    while ((start_angle < 90 and r_right_angle < start_angle + 270) or (start_angle >= 90 and (r_right_angle > start_angle or r_right_angle < start_angle - 90))):
-        pass
+    time.sleep(0.25)
+    if (start_angle > WHEEL_ROTATION_NEEDED): 
+        #print("A", r_right_angle, " ", start_angle)
+        while (r_right_angle > start_angle - WHEEL_ROTATION_NEEDED):
+            #print("B", r_right_angle, " ", start_angle)
+            pass
+    else: #start_angle <= WHEEL_ROTATION_NEEDED
+        #print("C", r_right_angle, " ", start_angle)
+        while (r_right_angle < start_angle):
+            #print("D", r_right_angle, " ", start_angle)
+            pass
+        time.sleep(0.1)
+        while (r_right_angle > start_angle + WHEEL_ROTATION_LOOPOVER):
+            #print("E", r_right_angle, " ", start_angle)
+            pass
+    stop_moving()
     print("COMPLETED RIGHT TURN")
 
+# turns 90 degrees left
+# this is blocking
 def turn_left_90deg():
     print("STARTING LEFT TURN")
     global r_right_angle
     start_angle = r_right_angle
-    set_left_motor_speed(15)
-    set_right_motor_speed(-15)
+    turn_left()
 
-    while ((start_angle > 270 and r_right_angle > start_angle - 270) or (start_angle <= 270 and (r_right_angle < start_angle or r_right_angle > start_angle + 90))):
-        pass
+    time.sleep(0.25)
+    if (start_angle < WHEEL_ROTATION_LOOPOVER):
+        #print("A", r_right_angle, " ", start_angle)
+        while (r_right_angle < start_angle + WHEEL_ROTATION_NEEDED):
+            #print("B", r_right_angle, " ", start_angle)
+            pass
+    else: #start angle >= 90
+        #print("C", r_right_angle, " ", start_angle)
+        while (r_right_angle > start_angle):
+            #print("D", r_right_angle, " ", start_angle)
+            pass
+        time.sleep(0.25)
+        while (r_right_angle < start_angle - WHEEL_ROTATION_LOOPOVER):
+            #print("E", r_right_angle, " ", start_angle)
+            pass
+    stop_moving()
     print("COMPLETED LEFT TURN")
 
 past_dir = 'R'
@@ -206,8 +259,7 @@ try:
 except KeyboardInterrupt:
     pass
 finally:
-    pi.hardware_PWM(RIGHT_WHEEL_PWM, 50, 0)
-    pi.hardware_PWM(LEFT_WHEEL_PWM, 50, 0)
+    stop_moving()
 
     frame = picam2.capture_array() 
     frame = cv2.rotate(frame, cv2.ROTATE_180)
