@@ -79,7 +79,7 @@ def hybrid_angle_detection(image):
         # Use barycenter approach
         moments = cv2.moments(largest_contour)
         if moments["m00"] == 0:
-            return None, image  # Invalid contour
+            return None, image, False  # Invalid contour
 
         cx = int(moments["m10"] / moments["m00"])
         cy = int(moments["m01"] / moments["m00"])

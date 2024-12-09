@@ -119,45 +119,44 @@ def turn_left():
     set_left_motor_speed(15)
     set_right_motor_speed(-15)
 
+# variables for how much the right wheel needs to rotate to do a 90 degree turn
+WHEEL_ROTATION_NEEDED_FORW = 270
+WHEEL_ROTATION_LOOPOVER_FORW = 360 - WHEEL_ROTATION_NEEDED_FORW
 # moves forwards 6in
 # this is the distance between the center of the axles, and where an intersection is detected
 # this is blocking
-def move_forward_6in(detect_angle):
+def move_forward_6in():
     global r_right_angle, past_dir
     start_angle = r_right_angle
-            #if start angle < 90                                   # if start angke >= 90       #greater than angle          #handle wraparound
-    while ((start_angle < 90 and r_right_angle < start_angle + 270) or (start_angle >= 90 and (r_right_angle > start_angle or r_right_angle < start_angle - 90))):
-        # picture
-        frame = picam2.capture_array() 
-        frame = cv2.rotate(frame, cv2.ROTATE_180)
-
-        # do detection
-        detect_angle, img, is_line = hybrid_angle_detection(frame)
-        is_intersection = process_image(frame)
-
-        print(detect_angle, " ", start_angle, " ", r_right_angle)
-
-        # overshoot protection
-        if detect_angle is None:
-            if (past_dir == 'R'):
-                turn_left()
-            else:
-                turn_right()
-        #normal line following
-        else:
-            if (detect_angle > 20):
-                turn_right()
-                past_dir = 'R'
-            elif (detect_angle < -20):
-                turn_left()
-                past_dir = 'L'
-            else:
-                move_forward()
-        time.sleep(0.2)
+    # angle increases
+    
+    move_forward()
+    time.sleep(0.1)
+    if (start_angle < WHEEL_ROTATION_LOOPOVER_FORW): 
+        print("A", r_right_angle, " ", start_angle)
+        while (r_right_angle < start_angle + WHEEL_ROTATION_NEEDED_FORW):
+            print("B", r_right_angle, " ", start_angle)
+            do_detect()
+            line_follow()
+            time.sleep(0.01)
+    else: #start_angle <= WHEEL_ROTATION_NEEDED_FORW
+        print("C", r_right_angle, " ", start_angle)
+        while (r_right_angle > start_angle):
+            print("D", r_right_angle, " ", start_angle)
+            do_detect()
+            line_follow()
+            time.sleep(0.01)
+        time.sleep(0.01)
+        while (r_right_angle < start_angle - WHEEL_ROTATION_LOOPOVER_FORW):
+            print("E", r_right_angle, " ", start_angle)
+            do_detect()
+            line_follow()
+            time.sleep(0.01)
+    stop_moving()
 
 # variables for how much the right wheel needs to rotate to do a 90 degree turn
-WHEEL_ROTATION_NEEDED = 180
-WHEEL_ROTATION_LOOPOVER = 360 - WHEEL_ROTATION_NEEDED
+WHEEL_ROTATION_NEEDED_TURN = 180
+WHEEL_ROTATION_LOOPOVER_TURN = 360 - WHEEL_ROTATION_NEEDED_TURN
 # turns 90 degrees right
 # this is blocking
 def turn_right_90deg():
@@ -168,19 +167,19 @@ def turn_right_90deg():
     start_angle = r_right_angle
     turn_right()
 
-    time.sleep(0.25)
-    if (start_angle > WHEEL_ROTATION_NEEDED): 
+    time.sleep(0.1)
+    if (start_angle > WHEEL_ROTATION_NEEDED_TURN): 
         #print("A", r_right_angle, " ", start_angle)
-        while (r_right_angle > start_angle - WHEEL_ROTATION_NEEDED):
+        while (r_right_angle > start_angle - WHEEL_ROTATION_NEEDED_TURN):
             #print("B", r_right_angle, " ", start_angle)
             pass
-    else: #start_angle <= WHEEL_ROTATION_NEEDED
+    else: #start_angle <= WHEEL_ROTATION_NEEDED_TURN
         #print("C", r_right_angle, " ", start_angle)
         while (r_right_angle < start_angle):
             #print("D", r_right_angle, " ", start_angle)
             pass
         time.sleep(0.1)
-        while (r_right_angle > start_angle + WHEEL_ROTATION_LOOPOVER):
+        while (r_right_angle > start_angle + WHEEL_ROTATION_LOOPOVER_TURN):
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
@@ -189,15 +188,16 @@ def turn_right_90deg():
 # turns 90 degrees left
 # this is blocking
 def turn_left_90deg():
+    # angle increases
     print("STARTING LEFT TURN")
     global r_right_angle
     start_angle = r_right_angle
     turn_left()
 
-    time.sleep(0.25)
-    if (start_angle < WHEEL_ROTATION_LOOPOVER):
+    time.sleep(0.1)
+    if (start_angle < WHEEL_ROTATION_LOOPOVER_TURN):
         #print("A", r_right_angle, " ", start_angle)
-        while (r_right_angle < start_angle + WHEEL_ROTATION_NEEDED):
+        while (r_right_angle < start_angle + WHEEL_ROTATION_NEEDED_TURN):
             #print("B", r_right_angle, " ", start_angle)
             pass
     else: #start angle >= 90
@@ -206,55 +206,67 @@ def turn_left_90deg():
             #print("D", r_right_angle, " ", start_angle)
             pass
         time.sleep(0.25)
-        while (r_right_angle < start_angle - WHEEL_ROTATION_LOOPOVER):
+        while (r_right_angle < start_angle - WHEEL_ROTATION_LOOPOVER_TURN):
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
     print("COMPLETED LEFT TURN")
 
+# global for detection angle
+detect_angle = 0
+is_intersection = False
+# takes an image w/ camera and does detection on it
+# all data is updated in globals
+# returns are only for debug info
+def do_detect():
+    global picam2, cv2
+    #take picture and rotate
+    frame = picam2.capture_array() 
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
+
+    #do detection
+    detect_angle, img, is_line = hybrid_angle_detection(frame)
+    is_intersection = process_image(frame)
+
+    return img, is_line
+    # returns a bunch of debug info
+
+# used in overshoot protection
 past_dir = 'R'
-try:
-    time.sleep(2)
-
-    while True:
-        #take picture and rotate
-        frame = picam2.capture_array() 
-        frame = cv2.rotate(frame, cv2.ROTATE_180)
-
-        #do detection
-        detect_angle, img, is_line = hybrid_angle_detection(frame)
-        is_intersection = process_image(frame)
-
-        
-        #debug trace
-        #print(detect_angle, " ", is_intersection, " ", r_right_angle)
-
-        #intersection loop
-        if is_intersection:
-            print("ENTERING INTERSECTION BLOCK")
-            move_forward_6in(detect_angle)
-            print("LEAVING INTERSECTION BLOCK")
-
-        #general line followerer
+# line following function using the global detect_angle
+def line_follow():
+    global detect_angle
+    if detect_angle is None:
+        if (past_dir == 'R'):
+            turn_left()
         else:
-            # overshoot protection
-            if detect_angle is None:
-                if (past_dir == 'R'):
-                    turn_left()
-                else:
-                    turn_right()
-            #normal line following
-            else:
-                if (detect_angle > 20):
-                    turn_right()
-                    past_dir = 'R'
-                elif (detect_angle < -20):
-                    turn_left()
-                    past_dir = 'L'
-                else:
-                    move_forward()
-        #general sleep timer
-        time.sleep(0.2)
+            turn_right()
+    #normal line following
+    else:
+        if (detect_angle > 20):
+            turn_right()
+            past_dir = 'R'
+        elif (detect_angle < -20):
+            turn_left()
+            past_dir = 'L'
+        else:
+            move_forward()
+
+
+try:
+    time.sleep(1)
+
+    move_forward_6in()
+    # while True:
+    #     do_detect()
+        
+    #     if is_intersection:
+    #         print("ENTERING INTERSECTION BLOCK")
+    #         move_forward_6in(detect_angle)
+    #         print("LEAVING INTERSECTION BLOCK")
+    #     else:
+    #         line_follow()
+    #     time.sleep(0.2)
         
 except KeyboardInterrupt:
     pass
