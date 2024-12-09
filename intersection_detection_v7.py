@@ -46,7 +46,7 @@ def process_image(img, blur_kernel_size=(105, 105)):#(50,05)
     intersection_detected = False
     for contour in contours:
         approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
-        if len(approx) > 4:  # Intersection typically has multiple connecting lines
+        if len(approx) > 5:  # Intersection typically has multiple connecting lines
             intersection_detected = True
             cv2.drawContours(output_img, [contour], -1, (255, 0, 0), 2)
     

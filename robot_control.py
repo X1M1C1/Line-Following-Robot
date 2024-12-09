@@ -126,6 +126,9 @@ WHEEL_ROTATION_LOOPOVER_FORW = 360 - WHEEL_ROTATION_NEEDED_FORW
 # this is the distance between the center of the axles, and where an intersection is detected
 # this is blocking
 def move_forward_6in():
+    print("START PRECISE MOVE")
+    precise_look_forward()
+    print("END PRECISE MOVE")
     global r_right_angle, past_dir
     start_angle = r_right_angle
     # angle increases
@@ -136,22 +139,16 @@ def move_forward_6in():
         #print("A", r_right_angle, " ", start_angle)
         while (r_right_angle < start_angle + WHEEL_ROTATION_NEEDED_FORW):
             #print("B", r_right_angle, " ", start_angle)
-            do_detect()
-            line_follow()
-            time.sleep(0.01)
+            pass
     else: #start_angle <= WHEEL_ROTATION_NEEDED_FORW
         #print("C", r_right_angle, " ", start_angle)
         while (r_right_angle > start_angle):
             #print("D", r_right_angle, " ", start_angle)
-            do_detect()
-            line_follow()
-            time.sleep(0.01)
+            pass
         time.sleep(0.01)
         while (r_right_angle < start_angle - WHEEL_ROTATION_LOOPOVER_FORW):
             #print("E", r_right_angle, " ", start_angle)
-            do_detect()
-            line_follow()
-            time.sleep(0.01)
+            pass
     stop_moving()
 
 # variables for how much the right wheel needs to rotate to do a 90 degree turn
@@ -254,6 +251,34 @@ def line_follow():
         else:
             move_forward()
 
+# aims the robot precisely ahead
+# blocking
+def precise_look_forward():
+    stop_moving()
+    global detect_angle, past_dir
+    target = True
+    while target:
+        do_detect()
+        if detect_angle is None:
+            if (past_dir == 'R'):
+                turn_left()
+            else:
+                turn_right()
+        #normal line following
+        else:
+            if (detect_angle > 10):
+                print("a")
+                turn_right()
+                past_dir = 'R'
+            elif (detect_angle < -10):
+                print("b")
+                turn_left()
+                past_dir = 'L'
+            else:
+                print("c")
+                target = False
+        time.sleep(0.01)
+
 
 try:
     time.sleep(1)
@@ -272,7 +297,8 @@ try:
         else:
             print("FOLLOWING")
             line_follow()
-        time.sleep(0.2) 
+            time.sleep(0.1)
+        
         
 except KeyboardInterrupt:
     pass
