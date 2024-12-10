@@ -109,15 +109,15 @@ def stop_moving():
 
 # sets the wheels to turn right
 # is not blocking
-def turn_right():
-    set_left_motor_speed(-15)
-    set_right_motor_speed(15)
+def turn_right(speed):
+    set_left_motor_speed(-speed)
+    set_right_motor_speed(speed)
 
 # sets the wheels to turn left
 # is not blocking
-def turn_left():
-    set_left_motor_speed(15)
-    set_right_motor_speed(-15)
+def turn_left(speed):
+    set_left_motor_speed(speed)
+    set_right_motor_speed(-speed)
 
 # variables for how much the right wheel needs to rotate to do a 90 degree turn
 WHEEL_ROTATION_NEEDED_FORW = 270
@@ -163,7 +163,7 @@ def turn_right_90deg():
     print("STARTING RIGHT TURN")
     global r_right_angle
     start_angle = r_right_angle
-    turn_right()
+    turn_right(15)
 
     time.sleep(0.1)
     if (start_angle > WHEEL_ROTATION_NEEDED_TURN): 
@@ -190,7 +190,7 @@ def turn_left_90deg():
     print("STARTING LEFT TURN")
     global r_right_angle
     start_angle = r_right_angle
-    turn_left()
+    turn_left(15)
 
     time.sleep(0.1)
     if (start_angle < WHEEL_ROTATION_LOOPOVER_TURN):
@@ -213,6 +213,7 @@ def turn_left_90deg():
 # global for detection angle
 detect_angle = 0
 is_intersection = False
+is_line = False
 # takes an image w/ camera and does detection on it
 # all data is updated in globals
 # returns are only for debug info
@@ -234,21 +235,32 @@ def do_detect():
 past_dir = 'R'
 # line following function using the global detect_angle
 def line_follow():
-    global detect_angle, past_dir
+    global detect_angle, past_dir, is_line
     if detect_angle is None:
         if (past_dir == 'R'):
-            turn_left()
+            print("OVERSHOOT L")
+            turn_left(15)
+        elif (past_dir == 'L'):
+            print("OVERSHOOT R")
+            turn_right(15)
         else:
-            turn_right()
+            print("WHAT THE FUCK")
     #normal line following
     else:
         if (detect_angle > 20):
-            turn_right()
+            print("FOLLOW R ", detect_angle, " ", is_line)
+            turn_right(15)
             past_dir = 'R'
         elif (detect_angle < -20):
-            turn_left()
+            print("FOLLOW L ", detect_angle, " ", is_line)
+            turn_left(15)
             past_dir = 'L'
         else:
+            print("FOLLOW F ", detect_angle, " ", is_line)
+            if (past_dir == 'R'):
+                past_dir = 'L'
+            elif (past_dir == 'L'):
+                past_dir = 'R'
             move_forward()
 
 # aims the robot precisely ahead
@@ -261,18 +273,18 @@ def precise_look_forward():
         do_detect()
         if detect_angle is None:
             if (past_dir == 'R'):
-                turn_left()
+                turn_left(15)
             else:
-                turn_right()
+                turn_right(15)
         #normal line following
         else:
             if (detect_angle > 10):
                 print("a")
-                turn_right()
+                turn_right(15)
                 past_dir = 'R'
             elif (detect_angle < -10):
                 print("b")
-                turn_left()
+                turn_left(15)
                 past_dir = 'L'
             else:
                 print("c")
@@ -292,10 +304,9 @@ try:
             i += 1
             move_forward_6in()
             print("STARTING TURN")
-            turn_right_90deg()
+            turn_left_90deg()
             print("LEAVING INTERSECTION BLOCK")
         else:
-            print("FOLLOWING")
             line_follow()
             time.sleep(0.1)
         
