@@ -182,6 +182,8 @@ def turn_right_90deg():
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
+    global past_dir
+    past_dir = 'R'
     print("COMPLETED RIGHT TURN")
 
 # turns 90 degrees left
@@ -209,6 +211,8 @@ def turn_left_90deg():
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
+    global past_dir
+    past_dir = 'L'
     print("COMPLETED LEFT TURN")
 
 # global for detection angle
@@ -317,6 +321,30 @@ def precise_look_forward():
                 target = False
         time.sleep(0.01)
 
+# blocking
+def get_distance():
+    # Send a pulse to the TRIG pin
+    GPIO.output(ULTRASONIC_TRIG, GPIO.LOW)
+    time.sleep(0.05)  # Wait for a moment to clear the previous signal
+    GPIO.output(ULTRASONIC_TRIG, GPIO.HIGH)
+    time.sleep(0.00001)  # Send a short pulse
+    GPIO.output(ULTRASONIC_TRIG, GPIO.LOW)
+
+    # Wait for the Echo pin to go HIGH, then measure how long it stays HIGH
+    while GPIO.input(ULTRASONIC_ECHO) == GPIO.LOW:
+        pulse_start = time.time()
+    
+    while GPIO.input(ULTRASONIC_ECHO) == GPIO.HIGH:
+        pulse_end = time.time()
+
+    # Calculate the pulse duration and distance
+    pulse_duration = pulse_end - pulse_start
+    distance = pulse_duration * 17150  # Speed of sound is 34300 cm/s, so we divide by 2
+    distance = round(distance, 2)  # Round to two decimal places
+
+    return distance
+
+
 last_turn_line = True
 try:
     time.sleep(1)
@@ -325,7 +353,11 @@ try:
     while True:
         line_img, is_line, intersection_img = do_detect()
         #cv2.imwrite("turn_"+str(j)+".png", line_img)
-        if is_intersection:
+        if get_distance() < 22:
+            print("OBSTACLE DETECTED")
+            turn_left_90deg()
+            turn_left_90deg()
+        elif is_intersection:
             print("ENTERING INTERSECTION BLOCK")
             cv2.imwrite("intersect_"+str(i)+".png", intersection_img)
             i += 1
