@@ -281,7 +281,7 @@ def line_follow():
             elif (past_dir == 'L'):
                 past_dir = 'R'
             move_forward()
-            time.sleep(0.08)
+            time.sleep(0.3)
             stop_moving()  
         return False
 
