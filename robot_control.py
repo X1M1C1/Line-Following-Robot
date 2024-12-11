@@ -281,6 +281,8 @@ def line_follow():
             elif (past_dir == 'L'):
                 past_dir = 'R'
             move_forward()
+            time.sleep(0.08)
+            stop_moving()  
         return False
 
 # aims the robot precisely ahead
@@ -315,7 +317,7 @@ def precise_look_forward():
                 target = False
         time.sleep(0.01)
 
-
+last_turn_line = True
 try:
     time.sleep(1)
     i = 0
@@ -335,10 +337,13 @@ try:
             overturn = line_follow()
             if (not overturn):
                 cv2.imwrite("turn_"+str(j)+".png", line_img)
+                last_turn_line = True
                 #j += 1
             else:
-                cv2.imwrite("over_"+str(j)+".png", line_img)
-            time.sleep(0.02)    
+                if last_turn_line:
+                    cv2.imwrite("last_over.png", line_img)
+                last_turn_line = False
+                cv2.imwrite("over_"+str(j)+".png", line_img)  
 except KeyboardInterrupt:
     pass
 finally:
