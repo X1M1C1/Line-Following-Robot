@@ -126,9 +126,9 @@ WHEEL_ROTATION_LOOPOVER_FORW = 360 - WHEEL_ROTATION_NEEDED_FORW
 # this is the distance between the center of the axles, and where an intersection is detected
 # this is blocking
 def move_forward_6in():
-    print("START PRECISE MOVE")
+    print("START PRECISE TURN")
     precise_look_forward()
-    print("END PRECISE MOVE")
+    print("END PRECISE TURN")
     global r_right_angle, past_dir
     start_angle = r_right_angle
     # angle increases
@@ -150,6 +150,7 @@ def move_forward_6in():
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
+    print("END PRECISE MOVE")
 
 # variables for how much the right wheel needs to rotate to do a 90 degree turn
 WHEEL_ROTATION_NEEDED_TURN = 180
@@ -234,26 +235,44 @@ def do_detect():
 # used in overshoot protection
 past_dir = 'R'
 # line following function using the global detect_angle
+# returns if overshoot or not
 def line_follow():
     global detect_angle, past_dir, is_line
     if detect_angle is None:
         if (past_dir == 'R'):
             print("OVERSHOOT L")
             turn_left(15)
+            time.sleep(0.05)
+            move_forward()
+            time.sleep(0.05)
+            stop_moving()
         elif (past_dir == 'L'):
             print("OVERSHOOT R")
             turn_right(15)
+            time.sleep(0.05)
+            move_forward()
+            time.sleep(0.05)
+            stop_moving()
         else:
             print("WHAT THE FUCK")
+        return True
     #normal line following
     else:
         if (detect_angle > 20):
             print("FOLLOW R ", detect_angle, " ", is_line)
             turn_right(15)
+            time.sleep(0.05)
+            move_forward()
+            time.sleep(0.05)
+            stop_moving()
             past_dir = 'R'
         elif (detect_angle < -20):
             print("FOLLOW L ", detect_angle, " ", is_line)
             turn_left(15)
+            time.sleep(0.05)
+            move_forward()
+            time.sleep(0.05)
+            stop_moving()
             past_dir = 'L'
         else:
             print("FOLLOW F ", detect_angle, " ", is_line)
@@ -262,6 +281,7 @@ def line_follow():
             elif (past_dir == 'L'):
                 past_dir = 'R'
             move_forward()
+        return False
 
 # aims the robot precisely ahead
 # blocking
@@ -273,18 +293,22 @@ def precise_look_forward():
         do_detect()
         if detect_angle is None:
             if (past_dir == 'R'):
-                turn_left(15)
+                turn_left(20)
             else:
-                turn_right(15)
+                turn_right(20)
         #normal line following
         else:
             if (detect_angle > 10):
                 print("a")
-                turn_right(15)
+                turn_right(20)
+                time.sleep(0.05)
+                stop_moving()
                 past_dir = 'R'
             elif (detect_angle < -10):
                 print("b")
-                turn_left(15)
+                turn_left(20)
+                time.sleep(0.05)
+                stop_moving()
                 past_dir = 'L'
             else:
                 print("c")
@@ -295,9 +319,10 @@ def precise_look_forward():
 try:
     time.sleep(1)
     i = 0
+    j = 0
     while True:
         line_img, is_line, intersection_img = do_detect()
-        
+        #cv2.imwrite("turn_"+str(j)+".png", line_img)
         if is_intersection:
             print("ENTERING INTERSECTION BLOCK")
             cv2.imwrite("intersect_"+str(i)+".png", intersection_img)
@@ -307,10 +332,13 @@ try:
             turn_left_90deg()
             print("LEAVING INTERSECTION BLOCK")
         else:
-            line_follow()
-            time.sleep(0.1)
-        
-        
+            overturn = line_follow()
+            if (not overturn):
+                cv2.imwrite("turn_"+str(j)+".png", line_img)
+                #j += 1
+            else:
+                cv2.imwrite("over_"+str(j)+".png", line_img)
+            time.sleep(0.02)    
 except KeyboardInterrupt:
     pass
 finally:

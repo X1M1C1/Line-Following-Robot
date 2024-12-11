@@ -42,6 +42,8 @@ def hybrid_angle_detection(image):
     contours = [cnt for cnt in contours if cv2.contourArea(cnt) > MIN_CONTOUR_AREA]
 
     # Find the largest contour
+    if len(contours) == 0:
+        return None, image, False
     largest_contour = max(contours, key=cv2.contourArea)
     
     # Fit a line to the contour
