@@ -1,7 +1,6 @@
 __pycache__/*.pyc
-test.png
 ultrasonic_test.py
 motor_test.py
 camera_test.py
-test_raw.png
-test_line.png
+*.png
+intersection_test.py

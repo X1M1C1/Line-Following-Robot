@@ -45,10 +45,10 @@ def process_image(img, blur_kernel_size=(105, 105)):#(50,05)
     # Analyze contours for intersections
     intersection_detected = False
     for contour in contours:
-        approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
-        if len(approx) > 4:  # Intersection typically has multiple connecting lines
+        approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
+        if len(approx) > 5:  # Intersection typically has multiple connecting lines
             intersection_detected = True
-            cv2.drawContours(output_img, [contour], -1, (255, 0, 0), 2)
+            cv2.drawContours(output_img, [contour], -1, (0, 255, 0), 2)
     
     # Visualize the steps
     # plt.figure(figsize=(12, 6))
@@ -66,7 +66,7 @@ def process_image(img, blur_kernel_size=(105, 105)):#(50,05)
     
     # plt.show()
 
-    return intersection_detected
+    return intersection_detected, output_img
 
 
 # Function to process all images in a directory

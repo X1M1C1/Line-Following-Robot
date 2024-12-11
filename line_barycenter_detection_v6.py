@@ -33,9 +33,17 @@ def hybrid_angle_detection(image):
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
-        return None, image  # No contours found
+        return None, image, False # No contours found
+        
+    #Adjust to exclude thin black lines    
+    MIN_CONTOUR_AREA = 500  # Adjust this threshold based on your environment
+    
+    # Filter contours by area
+    contours = [cnt for cnt in contours if cv2.contourArea(cnt) > MIN_CONTOUR_AREA]
 
     # Find the largest contour
+    if len(contours) == 0:
+        return None, image, False
     largest_contour = max(contours, key=cv2.contourArea)
     
     # Fit a line to the contour
@@ -79,7 +87,7 @@ def hybrid_angle_detection(image):
         # Use barycenter approach
         moments = cv2.moments(largest_contour)
         if moments["m00"] == 0:
-            return None, image  # Invalid contour
+            return None, image, False  # Invalid contour
 
         cx = int(moments["m10"] / moments["m00"])
         cy = int(moments["m01"] / moments["m00"])
