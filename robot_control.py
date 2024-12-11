@@ -182,6 +182,8 @@ def turn_right_90deg():
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
+    global past_dir
+    past_dir = 'R'
     print("COMPLETED RIGHT TURN")
 
 # turns 90 degrees left
@@ -209,6 +211,8 @@ def turn_left_90deg():
             #print("E", r_right_angle, " ", start_angle)
             pass
     stop_moving()
+    global past_dir
+    past_dir = 'L'
     print("COMPLETED LEFT TURN")
 
 # global for detection angle
