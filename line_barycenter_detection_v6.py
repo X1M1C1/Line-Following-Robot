@@ -34,6 +34,12 @@ def hybrid_angle_detection(image):
     
     if not contours:
         return None, image, False # No contours found
+        
+    #Adjust to exclude thin black lines    
+    MIN_CONTOUR_AREA = 500  # Adjust this threshold based on your environment
+    
+    # Filter contours by area
+    contours = [cnt for cnt in contours if cv2.contourArea(cnt) > MIN_CONTOUR_AREA]
 
     # Find the largest contour
     largest_contour = max(contours, key=cv2.contourArea)
