@@ -51,8 +51,8 @@ def hybrid_angle_detection(image):
     
     # Image dimensions
     h, w = image.shape[:2]
-    center_left = 2 * w // 5
-    center_right = 4 * (w // 5)
+    center_left = 1 * w // 3
+    center_right = 2 * (w // 3)
 
     # Calculate intersection with the bottom horizontal line
     if vy == 0:  # Avoid division by zero

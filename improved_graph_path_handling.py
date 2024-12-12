@@ -88,33 +88,30 @@ def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction=
     heading_direction_conversion_directory= {
               #left                right                forward                  backward
     #east
-    "east":{  "left":"forward",    "right":"backward",   "forward":"right",        "backward":"left"     },                   
+    "east":{  "left":"backward",   "right":"forward",   "forward":"right",        "backward":"left"     },                   
     #west
-    "west":{  "left":"backward",   "right":"forward",    "forward":"left",         "backward":"right"    },  
+    "west":{  "left":"forward",   "right":"backward",    "forward":"left",         "backward":"right"    },  
     #north
     "north":{ "left":"left",       "right":"right",      "forward":"forward",      "backward":"backwards"},  
     #south
     "south":{ "left":"right",      "right":"left",       "forward":"backward",     "backward":"forward"  }
     }
-    m,n=graph_dimensions
-    for i in range(len(node_list)):
+    n,m=graph_dimensions
+    print(node_list)
+    for i in range(len(node_list)-1):
         current_node = node_list[i]
-        next_node = node_list[i]
-
+        next_node = node_list[i+1]
+        #print("a", n, m, current_node, next_node)
         if  current_node - next_node == 1:
             heading = "west"
-            
         elif current_node - next_node == -1:
             heading = "east"
-
-        elif current_node - next_node == m:
+        elif current_node - next_node == -n:
             heading = "north"
-
-        elif current_node - next_node == -m:
-            heading = " south"
-
+        elif current_node - next_node == n:
+            heading = "south"
         else:
-            return ValueError("Non rectangluar graph, this algorithm does not apply... make your own!")
+            return ValueError("You serve zero purpose!")
         translated_node_list.append(heading_direction_conversion_directory[heading][previous_direction])
         previous_direction = translated_node_list[-1]
     
@@ -235,13 +232,13 @@ def lighten_color(hex_color, amount=0.1):
     lighter_hex = mcolors.to_hex(lighter_rgb)
     return lighter_hex
 
-def setup(graph_dimensions= [2,3], start=0, end=None, initial_direction = "forward" ):
+def setup(graph_dimensions= [3,2], start=0, end=None, initial_direction = "forward" ):
     n,m = graph_dimensions
     if end == None:
         end = n*m-1
     graph = set_graph(n, m) 
     _ ,node_path = dijkstra(graph, start, end)
-    turning_path = path_node_to_turn_translation(node_path,[m,n], initial_direction )
+    turning_path = path_node_to_turn_translation(node_path,[n,m], initial_direction )
     return graph, node_path, turning_path
 
 def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_reached_idx,last_node_targeted_idx):
@@ -260,7 +257,7 @@ def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_
     i,j = node_number % n, -np.floor(node_number / m)
     updated_graph = update_graph_on_obstacle(graph, i, j)
     _ ,updated_node_path = dijkstra(updated_graph, last_node_targeted_idx, node_path[-1])
-    updated_turning_path = path_node_to_turn_translation(updated_node_path,[m,n], last_direction_inverted)
+    updated_turning_path = path_node_to_turn_translation(updated_node_path,[n,m], last_direction_inverted)
     return  updated_graph,updated_node_path,updated_turning_path #not sure about these outputs maybe need more, needs a pressure test
 
 if __name__ == "__main__":
@@ -273,7 +270,7 @@ if __name__ == "__main__":
     graph, node_path, turning_path = setup(graph_dimensions, 3, 2, "forward" )
         # turning_path is a list of intersection directions
     plot_current_position_on_grid(graph_dimensions, 0, [[0]], [[0]])
-    
+
     # # Select origin and destination
     # origin, destination = 0, n * n - 1
 
