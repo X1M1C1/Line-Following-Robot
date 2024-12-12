@@ -153,7 +153,7 @@ def move_forward_6in():
     print("END PRECISE MOVE")
 
 # variables for how much the right wheel needs to rotate to do a 90 degree turn
-WHEEL_ROTATION_NEEDED_TURN = 180
+WHEEL_ROTATION_NEEDED_TURN = 160
 WHEEL_ROTATION_LOOPOVER_TURN = 360 - WHEEL_ROTATION_NEEDED_TURN
 # turns 90 degrees right
 # this is blocking
