@@ -164,7 +164,7 @@ def turn_right_90deg():
     print("STARTING RIGHT TURN")
     global r_right_angle
     start_angle = r_right_angle
-    turn_right(15)
+    turn_right(20)
 
     time.sleep(0.1)
     if (start_angle > WHEEL_ROTATION_NEEDED_TURN): 
@@ -193,7 +193,7 @@ def turn_left_90deg():
     print("STARTING LEFT TURN")
     global r_right_angle
     start_angle = r_right_angle
-    turn_left(15)
+    turn_left(20)
 
     time.sleep(0.1)
     if (start_angle < WHEEL_ROTATION_LOOPOVER_TURN):
@@ -246,14 +246,14 @@ def line_follow():
         if (past_dir == 'R'):
             print("OVERSHOOT L")
             turn_left(15)
-            time.sleep(0.05)
+            time.sleep(0.1)
             move_forward()
             time.sleep(0.05)
             stop_moving()
         elif (past_dir == 'L'):
             print("OVERSHOOT R")
             turn_right(15)
-            time.sleep(0.05)
+            time.sleep(0.1)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -265,7 +265,7 @@ def line_follow():
         if (detect_angle > 20):
             print("FOLLOW R ", detect_angle, " ", is_line)
             turn_right(15)
-            time.sleep(0.05)
+            time.sleep(0.1)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -273,7 +273,7 @@ def line_follow():
         elif (detect_angle < -20):
             print("FOLLOW L ", detect_angle, " ", is_line)
             turn_left(15)
-            time.sleep(0.05)
+            time.sleep(0.1)
             move_forward()
             time.sleep(0.05)
             stop_moving()
