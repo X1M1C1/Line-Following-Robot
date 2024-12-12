@@ -97,7 +97,7 @@ def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction=
     "south":{ "left":"right",      "right":"left",       "forward":"backward",     "backward":"forward"  }
     }
     m,n=graph_dimensions
-    for i in range(len(node_list))
+    for i in range(len(node_list)):
         current_node = node_list[i]
         next_node = node_list[i]
 
@@ -169,8 +169,8 @@ def plot_current_position_on_grid(grid_dimensions, current_node=None, paths=None
     Visualizes the grid with optional paths and obstacles.
     """
     #Current path
-    n = grid_dimensions[2]
-    m = grid_dimensions[1] 
+    n = grid_dimensions[1]
+    m = grid_dimensions[0] 
     path = paths[-1]
     plt.figure(figsize=(8, 8))
     for i in range(n):
@@ -200,7 +200,7 @@ def plot_current_position_on_grid(grid_dimensions, current_node=None, paths=None
             plt.plot([x1, x2], [y1, y2], c='red', linewidth=2, label="Old Path" if idx == 0 else "")
    
     if current_node is not None:
-        x, y = obstacle % n, -np.floor(obstacle / m)
+        x, y = current_node % n, -np.floor(current_node / m)
         plt.scatter(x, y, c='blue', s=100, label='Current_Robot_Position')
 
     old_paths = paths[:len(paths)-1]
@@ -264,31 +264,38 @@ def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_
     return  updated_graph,updated_node_path,updated_turning_path #not sure about these outputs maybe need more, needs a pressure test
 
 if __name__ == "__main__":
-    n = 6  # Grid size (6x6)
-    graph = set_graph(n)
+    # n = 6  # Grid size (6x6)
+    # graph = set_graph(n)
 
-    # Select origin and destination
-    origin, destination = 0, n * n - 1
 
-    # Calculate initial optimal path
-    dist, path = dijkstra(graph, origin, destination)
+    graph_dimensions = [2, 3]
+    m, n = graph_dimensions
+    graph, node_path, turning_path = setup(graph_dimensions, 3, 2, "forward" )
+        # turning_path is a list of intersection directions
+    plot_current_position_on_grid(graph_dimensions, 0, [[0]], [[0]])
+    
+    # # Select origin and destination
+    # origin, destination = 0, n * n - 1
 
-    # Plot grid with the initial path
-    print(f"Initial Path: {path} with Distance: {dist}")
-    plot_grid(n, path=path)
+    # # Calculate initial optimal path
+    # dist, path = dijkstra(graph, origin, destination)
 
-    # Add an obstacle along the path
-    if len(path) > 2:
-        obstacle_idx = 2  # Add obstacle on the 3rd vertex in the path
-        obstacle = path[obstacle_idx]
-        graph = update_graph_on_obstacle(graph, path[obstacle_idx - 1], path[obstacle_idx])
+    # # Plot grid with the initial path
+    # print(f"Initial Path: {path} with Distance: {dist}")
+    # plot_grid(n, path=path)
 
-        # Recalculate path
-        new_dist, new_path = dijkstra(graph, origin, destination)
-        if new_dist == np.inf:
-            print("No new path could be found due to the obstacle.")
-        else:
-            print(f"New Path: {new_path} with Distance: {new_dist}")
+    # # Add an obstacle along the path
+    # if len(path) > 2:
+    #     obstacle_idx = 2  # Add obstacle on the 3rd vertex in the path
+    #     obstacle = path[obstacle_idx]
+    #     graph = update_graph_on_obstacle(graph, path[obstacle_idx - 1], path[obstacle_idx])
 
-        # Plot updated grid
-        plot_grid(n, path=path, new_path=new_path, obstacle=obstacle)
+    #     # Recalculate path
+    #     new_dist, new_path = dijkstra(graph, origin, destination)
+    #     if new_dist == np.inf:
+    #         print("No new path could be found due to the obstacle.")
+    #     else:
+    #         print(f"New Path: {new_path} with Distance: {new_dist}")
+
+    #     # Plot updated grid
+    #     plot_grid(n, path=path, new_path=new_path, obstacle=obstacle)
