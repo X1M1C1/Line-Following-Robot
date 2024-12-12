@@ -254,9 +254,9 @@ def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_
         last_direction_inverted = "left"    
 
     node_number = last_node_reached_idx
-    i,j = node_number % n, -np.floor(node_number / m)
-    updated_graph = update_graph_on_obstacle(graph, i, j)
-    _ ,updated_node_path = dijkstra(updated_graph, last_node_targeted_idx, node_path[-1])
+    #i,j = node_number % n, int(np.floor(node_number / m)) 
+    updated_graph = update_graph_on_obstacle(graph, last_node_reached_idx, last_node_targeted_idx)
+    _ ,updated_node_path = dijkstra(updated_graph, last_node_reached_idx, node_path[-1])
     updated_turning_path = path_node_to_turn_translation(updated_node_path,[n,m], last_direction_inverted)
     return  updated_graph,updated_node_path,updated_turning_path #not sure about these outputs maybe need more, needs a pressure test
 

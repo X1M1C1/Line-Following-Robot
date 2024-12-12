@@ -363,29 +363,53 @@ try:
     i = 0
     running_big_loop = True
     while running_big_loop:
+        # grab detections
         line_img, is_line, intersection_img = do_detect()
+
+        # if we find something
         if get_distance() < 22:
             print("OBSTACLE DETECTED")
+
+            # TURN AROUND KID
             turn_left_90deg()
             turn_left_90deg()
-            graph, node_path, turning_path = obstacle_detect_behavior(n,m,graph,node_path,turning_path,node_path[turning_path_idx],node_path[turning_path_idx])    
+            # remake the graph
+            graph, node_path, turning_path = obstacle_detect_behavior(n,m,graph,node_path,turning_path,node_path[turning_path_idx],node_path[turning_path_idx+1])    
+            print(turning_path)
+            turning_path_idx = 0
+
         elif is_intersection:
             print("ENTERING INTERSECTION BLOCK")
+            # this stuff is debug
             cv2.imwrite("intersect_"+str(i)+".png", intersection_img)
             i += 1
+            # end debug
+
+            # move forwards to the intersection
             move_forward_6in()
             print("STARTING TURN")
+
+            # get turn info
             turn_dir = turning_path[turning_path_idx]
+            # turn
             if turn_dir == "left":
                 turn_left_90deg()
             elif  turn_dir == "right":
                 turn_right_90deg()
+            # if we go straight, there is no need to turn
+            # increment turning variable
             turning_path_idx += 1
             print("LEAVING INTERSECTION BLOCK")
+
+            # if there are no more left, quit loop
             if (turning_path_idx >= len(turning_path)):
                 running_big_loop = False
+        
+        # we are not at intersection
         else:
+            # line follow, recording if we overflow or not
             overturn = line_follow()
+            # store last turn image, naming it if it was an overturn or not
             if (not overturn):
                 cv2.imwrite("turn.png", line_img)
                 last_turn_line = True
