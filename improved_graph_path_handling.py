@@ -1,7 +1,7 @@
 import numpy as np
 import heapq  # For priority queue in Dijkstra's algorithm
 import matplotlib.pyplot as plt
-
+#doesn't work needs graph input paramsn and the few fixes that come with
 def set_graph(n, m=None):
     """
     Create a grid-based graph represented as an adjacency matrix.
@@ -235,8 +235,16 @@ def lighten_color(hex_color, amount=0.1):
     lighter_hex = mcolors.to_hex(lighter_rgb)
     return lighter_hex
 
-def obstacle_detect_behavior(graph,node_path,translated_node_list,last_node_reached_idx,last_node_targeted_idx):
-    m,n = len(graph), len(graph[0])
+def setup(graph_dimensions= [2,3], start=0, end=None, initial_direction = "forward" ):
+    n,m = graph_dimensions
+    if end == None:
+        end = n*m-1
+    graph = set_graph(n, m) 
+    _ ,node_path = dijkstra(graph, start, end)
+    turning_path = path_node_to_turn_translation(node_path,[m,n], initial_direction )
+    return graph, node_path, turning_path
+
+def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_reached_idx,last_node_targeted_idx):
     last_direction = translated_node_list[last_node_reached_idx] # maybe fix indexing
     #We do a 180 turn
     if last_direction == "forward":
