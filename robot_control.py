@@ -349,12 +349,12 @@ def get_distance():
 last_turn_line = True
 try:
     # graph stuff
-    graph_dimensions = [3, 2]
-    n, m = graph_dimensions
+    n = 3
+    m = 2
         # n is x, m is y
         # node numbering starts at SW, is row major
             #so goes right before it goes up
-    graph, node_path, turning_path = setup(graph_dimensions, 0, 5, "forward" )
+    graph, node_path, turning_path = setup(n, m, 0, 5, "forward" )
         # turning_path is a list of intersection directions
     print(turning_path)
     turning_path_idx = 0

@@ -118,7 +118,6 @@ def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction=
     
     return translated_node_list
 
-
 def plot_grid(n, path=None, new_path=None, obstacle=None):
     """
     Visualizes the grid with optional paths and obstacles.
@@ -232,8 +231,7 @@ def lighten_color(hex_color, amount=0.1):
     lighter_hex = mcolors.to_hex(lighter_rgb)
     return lighter_hex
 
-def setup(graph_dimensions= [3,2], start=0, end=None, initial_direction = "forward" ):
-    n,m = graph_dimensions
+def setup(n, m, start=0, end=None, initial_direction = "forward" ):
     if end == None:
         end = n*m-1
     graph = set_graph(n, m) 
