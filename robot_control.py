@@ -354,7 +354,7 @@ try:
         # n is x, m is y
         # node numbering starts at SW, is row major
             #so goes right before it goes up
-    graph, node_path, turning_path = setup(n, m, 0, 5, "forward" )
+    graph, node_path, turning_path = setup(n, m, 0, 5, "backward" )
         # turning_path is a list of intersection directions
     print(turning_path)
     turning_path_idx = 0

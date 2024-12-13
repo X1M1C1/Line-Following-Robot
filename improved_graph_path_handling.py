@@ -80,7 +80,7 @@ def update_graph_on_obstacle(graph, i, j):
     graph[j, i] = np.inf
     return graph
 
-def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction="forward"):
+def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction="backward"):
     #The convention taken is that the robot is always facing towards the north, whatever his original starting and ending nodes could be
     translated_node_list = []
     previous_direction = initial_direction
@@ -88,9 +88,9 @@ def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction=
     heading_direction_conversion_directory= {
               #left                right                forward                  backward
     #east
-    "east":{  "left":"backward",   "right":"forward",   "forward":"right",        "backward":"left"     },                   
+    "east":{  "left":"forward",   "right":"backward",   "forward":"right",        "backward":"left"     },                   
     #west
-    "west":{  "left":"forward",   "right":"backward",    "forward":"left",         "backward":"right"    },  
+    "west":{  "left":"backward",   "right":"forward",    "forward":"left",         "backward":"right"    },  
     #north
     "north":{ "left":"left",       "right":"right",      "forward":"forward",      "backward":"backwards"},  
     #south
@@ -101,17 +101,18 @@ def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction=
     for i in range(len(node_list)-1):
         current_node = node_list[i]
         next_node = node_list[i+1]
-        #print("a", n, m, current_node, next_node)
+        
         if  current_node - next_node == 1:
             heading = "west"
         elif current_node - next_node == -1:
             heading = "east"
-        elif current_node - next_node == -n:
-            heading = "north"
         elif current_node - next_node == n:
+            heading = "north"
+        elif current_node - next_node == -n:
             heading = "south"
         else:
             return ValueError("You serve zero purpose!")
+        print(current_node, next_node, heading)
         translated_node_list.append(heading_direction_conversion_directory[heading][previous_direction])
         previous_direction = translated_node_list[-1]
     
