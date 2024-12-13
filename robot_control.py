@@ -247,14 +247,14 @@ def line_follow():
         if (past_dir == 'R'):
             print("OVERSHOOT L")
             turn_left(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
         elif (past_dir == 'L'):
             print("OVERSHOOT R")
             turn_right(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -266,7 +266,7 @@ def line_follow():
         if (detect_angle > 30):
             print("FOLLOW R ", detect_angle, " ", is_line)
             turn_right(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -274,7 +274,7 @@ def line_follow():
         elif (detect_angle < -30):
             print("FOLLOW L ", detect_angle, " ", is_line)
             turn_left(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -286,7 +286,7 @@ def line_follow():
             elif (past_dir == 'L'):
                 past_dir = 'R'
             move_forward()
-            time.sleep(0.3)
+            time.sleep(0.4)
             stop_moving()  
         return False
 
@@ -354,13 +354,24 @@ try:
         # n is x, m is y
         # node numbering starts at SW, is row major
             #so goes right before it goes up
-    graph, node_path, turning_path = setup(n, m, 0, 5, "backward" )
+    graph, node_path, turning_path = setup(n, m, 0, 4, "south" )
         # turning_path is a list of intersection directions
+    print(node_path)
     print(turning_path)
-    turning_path_idx = 0
+    # we dont use the 0 index in the loop
+    turning_path_idx = 1
 
+    # give time for servos to send PWM signals
     time.sleep(1)
     i = 0
+
+    # initial turn
+    if turning_path[0] == "left":
+        turn_left_90deg()
+    elif turning_path[0] == "right":
+        turn_right_90deg()
+
+    # main loop
     running_big_loop = True
     while running_big_loop:
         # grab detections
@@ -374,7 +385,9 @@ try:
             turn_left_90deg()
             turn_left_90deg()
             # remake the graph
-            graph, node_path, turning_path = obstacle_detect_behavior(n,m,graph,node_path,turning_path,node_path[turning_path_idx],node_path[turning_path_idx+1])    
+            graph, node_path, turning_path = obstacle_detect_behavior(n,m,graph,node_path,turning_path,node_path[turning_path_idx-1],node_path[turning_path_idx])    
+            print("REROUTING COMPLETED")
+            print(node_path)
             print(turning_path)
             turning_path_idx = 0
 
@@ -389,21 +402,23 @@ try:
             move_forward_6in()
             print("STARTING TURN")
 
-            # get turn info
-            turn_dir = turning_path[turning_path_idx]
-            # turn
-            if turn_dir == "left":
-                turn_left_90deg()
-            elif  turn_dir == "right":
-                turn_right_90deg()
-            # if we go straight, there is no need to turn
-            # increment turning variable
-            turning_path_idx += 1
-            print("LEAVING INTERSECTION BLOCK")
-
             # if there are no more left, quit loop
             if (turning_path_idx >= len(turning_path)):
                 running_big_loop = False
+            # else we turn
+            else: 
+                # get turn info
+                turn_dir = turning_path[turning_path_idx]
+                # turn
+                if turn_dir == "left":
+                    turn_left_90deg()
+                elif  turn_dir == "right":
+                    turn_right_90deg()
+                # if we go straight, there is no need to turn
+                # increment turning variable
+                turning_path_idx += 1
+
+            print("LEAVING INTERSECTION BLOCK")
         
         # we are not at intersection
         else:
