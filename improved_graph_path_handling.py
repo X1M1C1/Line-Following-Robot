@@ -1,6 +1,21 @@
 import numpy as np
 import heapq  # For priority queue in Dijkstra's algorithm
 import matplotlib.pyplot as plt
+#doesn't work needs graph input paramsn and the few fixes that come with
+
+
+heading_direction_conversion_directory = {
+                                         # I NEED TO GO
+    # I AM FACING
+    #east
+    "east":{  "east":"forward",   "west":"backward",   "north":"right",        "south":"left"     },                   
+    #west
+    "west":{  "east":"backward",   "west":"forward",    "north":"left",         "south":"right"    },  
+    #north
+    "north":{ "east":"left",       "west":"right",      "north":"forward",      "south":"backwards"},  
+    #south
+    "south":{ "east":"right",      "west":"left",       "north":"backward",     "south":"forward"  }
+}
 
 def set_graph(n, m=None):
     """
@@ -80,6 +95,35 @@ def update_graph_on_obstacle(graph, i, j):
     graph[j, i] = np.inf
     return graph
 
+def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction="south"):
+    #The convention taken is that the robot is always facing towards the S, whatever his original starting and ending nodes could be
+    turn_list = []
+    previous_direction = initial_direction
+    #We will use wanted heading and previous direction in order to get 
+    global heading_direction_conversion_directory
+
+    n,m=graph_dimensions
+    for i in range(len(node_list)-1):
+        current_node = node_list[i]
+        next_node = node_list[i+1]
+        
+        if  current_node - next_node == 1:
+            next_heading = "west"
+        elif current_node - next_node == -1:
+            next_heading = "east"
+        elif current_node - next_node == n:
+            next_heading = "north"
+        elif current_node - next_node == -n:
+            next_heading = "south"
+        else:
+            return ValueError("You serve zero purpose!")
+
+        # this contains directions
+        turn_list.append(heading_direction_conversion_directory[next_heading][previous_direction])
+        previous_direction = next_heading
+    
+    return turn_list
+
 def plot_grid(n, path=None, new_path=None, obstacle=None):
     """
     Visualizes the grid with optional paths and obstacles.
@@ -92,10 +136,19 @@ def plot_grid(n, path=None, new_path=None, obstacle=None):
             plt.text(j, -i, f'{node}', fontsize=8, ha='center', va='center')
 
     if path:
+        #Starting point
+        starting_node = path[0]
+        x, y  = starting_node % n, -np.floor(starting_node / n)
+        plt.scatter(x, y, c='red', s=100, label='Starting Point')
+        #Destination
+        ending_node = path[-1]
+        x, y  = ending_node % n, -np.floor(ending_node / n)
+        plt.scatter(x, y, c='gree', s=100, label='Destination')
         for idx in range(len(path) - 1):
             x1, y1 = path[idx] % n, -np.floor(path[idx] / n)
             x2, y2 = path[idx + 1] % n, -np.floor(path[idx+1] / n)
-            plt.plot([x1, x2], [y1, y2], c='red', linewidth=2, label="Old Path" if idx == 0 else "")
+            plt.plot([x1, x2], [y1, y2], c='orange', linewidth=2, label="Old Path" if idx == 0 else "")
+      
 
     if new_path:
         for idx in range(len(new_path) - 1):
@@ -111,33 +164,142 @@ def plot_grid(n, path=None, new_path=None, obstacle=None):
     plt.gca().set_aspect('equal', adjustable='box')
     plt.legend()
     plt.show()
+    
+def plot_current_position_on_grid(grid_dimensions, current_node=None, paths=None, obstacles=None):
+    #Needs to be fixed
+    """
+    Visualizes the grid with optional paths and obstacles.
+    """
+    #Current path
+    n = grid_dimensions[1]
+    m = grid_dimensions[0] 
+    path = paths[-1]
+    plt.figure(figsize=(8, 8))
+    for i in range(n):
+        for j in range(m):
+            node = i * n + j
+            plt.scatter(j, -i, c='blue')
+            plt.text(j, -i, f'{node}', fontsize=8, ha='center', va='center')
+   
+   #Initial green color hex value
+    current_green_color = '#32CD32'
+
+    #Initial red color hex value  
+    current_red_color = '#FF0000'
+       
+    if path:
+        #Starting point
+        starting_node = path[0]
+        x, y  = starting_node % n, -np.floor(starting_node / m)
+        plt.scatter(x, y, c='red', s=100, label='Starting Point')
+        #Destination
+        ending_node = path[-1]
+        x, y  = ending_node % n, -np.floor(ending_node / m)
+        plt.scatter(x, y, c='green', s=100, label='Destination')
+        for idx in range(len(path) - 1):
+            x1, y1 = path[idx] % n, -np.floor(path[idx] / m)
+            x2, y2 = path[idx + 1] % n, -np.floor(path[idx+1] / m)
+            plt.plot([x1, x2], [y1, y2], c='red', linewidth=2, label="Old Path" if idx == 0 else "")
+   
+    if current_node is not None:
+        x, y = current_node % n, -np.floor(current_node / m)
+        plt.scatter(x, y, c='blue', s=100, label='Current_Robot_Position')
+
+    old_paths = paths[:len(paths)-1]
+    
+    for i in range(len(old_paths)):
+        lighten_color()
+        new_path = old_paths[i]
+        obstacle = obstacle[i]
+        current_red_color = lighten_color(current_red_color)
+
+        for idx in range(len(new_path) - 1):
+            x1, y1 = new_path[idx] % n, -np.floor(new_path[idx] / m)
+            x2, y2 = new_path[idx + 1] % n, -np.floor(new_path[idx+1] / m)
+            plt.plot([x1, x2], [y1, y2], c= current_red_color, linewidth=2, label="New_Path_{i}" if idx == 0 else "")
+
+        if obstacle is not None:
+            x, y = obstacle % n, -np.floor(obstacle / m)
+            plt.scatter(x, y, c='black', s=100, label='Obstacle_{i}')
+
+    plt.grid(True)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.legend()
+    plt.show()
+
+def lighten_color(hex_color, amount=0.1):
+    import matplotlib.colors as mcolors
+    # Convert hex to RGB 
+    rgb = mcolors.hex2color(hex_color)
+    # Lighten the color
+    lighter_rgb = [min(1, c + amount) for c in rgb]
+    # Convert back to hex 
+    lighter_hex = mcolors.to_hex(lighter_rgb)
+    return lighter_hex
+
+def setup(n, m, start=0, end=None, initial_direction = "forward" ):
+    if end == None:
+        end = n*m-1
+    graph = set_graph(n, m) 
+    _ ,node_path = dijkstra(graph, start, end)
+    turning_path = path_node_to_turn_translation(node_path,[n,m], initial_direction )
+    return graph, node_path, turning_path
+
+def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_reached_idx,last_node_targeted_idx):
+
+    # THESE VALUES ARE REVERSED FROM path_node_to_turn_translation
+    # since we turn around
+    if  last_node_targeted_idx - last_node_reached_idx == 1:
+        last_direction_inverted = "west"
+    elif last_node_targeted_idx - last_node_reached_idx == -1:
+        last_direction_inverted = "east"
+    elif last_node_targeted_idx - last_node_reached_idx == n:
+        last_direction_inverted = "north"
+    elif last_node_targeted_idx - last_node_reached_idx == -n:
+        last_direction_inverted = "south"
+    else:
+        return ValueError("A M O G U S")
+
+    node_number = last_node_reached_idx
+    #i,j = node_number % n, int(np.floor(node_number / m)) 
+    updated_graph = update_graph_on_obstacle(graph, last_node_reached_idx, last_node_targeted_idx)
+    _ ,updated_node_path = dijkstra(updated_graph, last_node_reached_idx, node_path[-1])
+    updated_turning_path = path_node_to_turn_translation(updated_node_path,[n,m], last_direction_inverted)
+    return  updated_graph,updated_node_path,updated_turning_path #not sure about these outputs maybe need more, needs a pressure test
 
 if __name__ == "__main__":
-    n = 6  # Grid size (6x6)
-    graph = set_graph(n)
+    # n = 6  # Grid size (6x6)
+    # graph = set_graph(n)
 
-    # Select origin and destination
-    origin, destination = 0, n * n - 1
 
-    # Calculate initial optimal path
-    dist, path = dijkstra(graph, origin, destination)
+    graph_dimensions = [2, 3]
+    m, n = graph_dimensions
+    graph, node_path, turning_path = setup(graph_dimensions, 3, 2, "forward" )
+        # turning_path is a list of intersection directions
+    plot_current_position_on_grid(graph_dimensions, 0, [[0]], [[0]])
 
-    # Plot grid with the initial path
-    print(f"Initial Path: {path} with Distance: {dist}")
-    plot_grid(n, path=path)
+    # # Select origin and destination
+    # origin, destination = 0, n * n - 1
 
-    # Add an obstacle along the path
-    if len(path) > 2:
-        obstacle_idx = 2  # Add obstacle on the 3rd vertex in the path
-        obstacle = path[obstacle_idx]
-        graph = update_graph_on_obstacle(graph, path[obstacle_idx - 1], path[obstacle_idx])
+    # # Calculate initial optimal path
+    # dist, path = dijkstra(graph, origin, destination)
 
-        # Recalculate path
-        new_dist, new_path = dijkstra(graph, origin, destination)
-        if new_dist == np.inf:
-            print("No new path could be found due to the obstacle.")
-        else:
-            print(f"New Path: {new_path} with Distance: {new_dist}")
+    # # Plot grid with the initial path
+    # print(f"Initial Path: {path} with Distance: {dist}")
+    # plot_grid(n, path=path)
 
-        # Plot updated grid
-        plot_grid(n, path=path, new_path=new_path, obstacle=obstacle)
+    # # Add an obstacle along the path
+    # if len(path) > 2:
+    #     obstacle_idx = 2  # Add obstacle on the 3rd vertex in the path
+    #     obstacle = path[obstacle_idx]
+    #     graph = update_graph_on_obstacle(graph, path[obstacle_idx - 1], path[obstacle_idx])
+
+    #     # Recalculate path
+    #     new_dist, new_path = dijkstra(graph, origin, destination)
+    #     if new_dist == np.inf:
+    #         print("No new path could be found due to the obstacle.")
+    #     else:
+    #         print(f"New Path: {new_path} with Distance: {new_dist}")
+
+    #     # Plot updated grid
+    #     plot_grid(n, path=path, new_path=new_path, obstacle=obstacle)
