@@ -6,6 +6,7 @@ import pigpio
 from picamera2 import Picamera2
 from line_barycenter_detection_v6 import *
 from intersection_detection_v7 import *
+from improved_graph_path_handling import *
 
 # GPIO PINS
 LEFT_WHEEL_PWM = 12
@@ -246,14 +247,14 @@ def line_follow():
         if (past_dir == 'R'):
             print("OVERSHOOT L")
             turn_left(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
         elif (past_dir == 'L'):
             print("OVERSHOOT R")
             turn_right(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -262,18 +263,18 @@ def line_follow():
         return True
     #normal line following
     else:
-        if (detect_angle > 20):
+        if (detect_angle > 30):
             print("FOLLOW R ", detect_angle, " ", is_line)
             turn_right(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
             past_dir = 'R'
-        elif (detect_angle < -20):
+        elif (detect_angle < -30):
             print("FOLLOW L ", detect_angle, " ", is_line)
             turn_left(15)
-            time.sleep(0.1)
+            time.sleep(0.15)
             move_forward()
             time.sleep(0.05)
             stop_moving()
@@ -285,7 +286,7 @@ def line_follow():
             elif (past_dir == 'L'):
                 past_dir = 'R'
             move_forward()
-            time.sleep(0.3)
+            time.sleep(0.4)
             stop_moving()  
         return False
 
@@ -347,35 +348,92 @@ def get_distance():
 
 last_turn_line = True
 try:
+    # graph stuff
+    n = 3
+    m = 2
+        # n is x, m is y
+        # node numbering starts at SW, is row major
+            #so goes right before it goes up
+    graph, node_path, turning_path = setup(n, m, 0, 4, "south" )
+        # turning_path is a list of intersection directions
+    print(node_path)
+    print(turning_path)
+    # we dont use the 0 index in the loop
+    turning_path_idx = 1
+
+    # give time for servos to send PWM signals
     time.sleep(1)
     i = 0
-    j = 0
-    while True:
+
+    # initial turn
+    if turning_path[0] == "left":
+        turn_left_90deg()
+    elif turning_path[0] == "right":
+        turn_right_90deg()
+
+    # main loop
+    running_big_loop = True
+    while running_big_loop:
+        # grab detections
         line_img, is_line, intersection_img = do_detect()
-        #cv2.imwrite("turn_"+str(j)+".png", line_img)
+
+        # if we find something
         if get_distance() < 22:
             print("OBSTACLE DETECTED")
+
+            # TURN AROUND KID
             turn_left_90deg()
             turn_left_90deg()
+            # remake the graph
+            graph, node_path, turning_path = obstacle_detect_behavior(n,m,graph,node_path,turning_path,node_path[turning_path_idx-1],node_path[turning_path_idx])    
+            print("REROUTING COMPLETED")
+            print(node_path)
+            print(turning_path)
+            turning_path_idx = 0
+
         elif is_intersection:
             print("ENTERING INTERSECTION BLOCK")
+            # this stuff is debug
             cv2.imwrite("intersect_"+str(i)+".png", intersection_img)
             i += 1
+            # end debug
+
+            # move forwards to the intersection
             move_forward_6in()
             print("STARTING TURN")
-            turn_left_90deg()
+
+            # if there are no more left, quit loop
+            if (turning_path_idx >= len(turning_path)):
+                running_big_loop = False
+            # else we turn
+            else: 
+                # get turn info
+                turn_dir = turning_path[turning_path_idx]
+                # turn
+                if turn_dir == "left":
+                    turn_left_90deg()
+                elif  turn_dir == "right":
+                    turn_right_90deg()
+                # if we go straight, there is no need to turn
+                # increment turning variable
+                turning_path_idx += 1
+
             print("LEAVING INTERSECTION BLOCK")
+        
+        # we are not at intersection
         else:
+            # line follow, recording if we overflow or not
             overturn = line_follow()
+            # store last turn image, naming it if it was an overturn or not
             if (not overturn):
-                cv2.imwrite("turn_"+str(j)+".png", line_img)
+                cv2.imwrite("turn.png", line_img)
                 last_turn_line = True
-                #j += 1
             else:
                 if last_turn_line:
                     cv2.imwrite("last_over.png", line_img)
                 last_turn_line = False
-                cv2.imwrite("over_"+str(j)+".png", line_img)  
+                cv2.imwrite("over.png", line_img)  
+    print("DESTINATION REACHED")
 except KeyboardInterrupt:
     pass
 finally:

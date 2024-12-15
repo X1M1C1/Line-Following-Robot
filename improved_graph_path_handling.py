@@ -2,6 +2,21 @@ import numpy as np
 import heapq  # For priority queue in Dijkstra's algorithm
 import matplotlib.pyplot as plt
 #doesn't work needs graph input paramsn and the few fixes that come with
+
+
+heading_direction_conversion_directory = {
+                                         # I NEED TO GO
+    # I AM FACING
+    #east
+    "east":{  "east":"forward",   "west":"backward",   "north":"right",        "south":"left"     },                   
+    #west
+    "west":{  "east":"backward",   "west":"forward",    "north":"left",         "south":"right"    },  
+    #north
+    "north":{ "east":"left",       "west":"right",      "north":"forward",      "south":"backwards"},  
+    #south
+    "south":{ "east":"right",      "west":"left",       "north":"backward",     "south":"forward"  }
+}
+
 def set_graph(n, m=None):
     """
     Create a grid-based graph represented as an adjacency matrix.
@@ -80,47 +95,34 @@ def update_graph_on_obstacle(graph, i, j):
     graph[j, i] = np.inf
     return graph
 
-def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction="forward"):
-    #The convention taken is that the robot is always facing towards the north, whatever his original starting and ending nodes could be
-    translated_node_list = []
+def path_node_to_turn_translation(node_list,graph_dimensions, initial_direction="south"):
+    #The convention taken is that the robot is always facing towards the S, whatever his original starting and ending nodes could be
+    turn_list = []
     previous_direction = initial_direction
     #We will use wanted heading and previous direction in order to get 
-    heading_direction_conversion_directory= {
-              #left                right                forward                  backward
-    #east
-    "east":{  "left":"forward",    "right":"backward",   "forward":"right",        "backward":"left"     },                   
-    #west
-    "west":{  "left":"backward",   "right":"forward",    "forward":"left",         "backward":"right"    },  
-    #north
-    "north":{ "left":"left",       "right":"right",      "forward":"forward",      "backward":"backwards"},  
-    #south
-    "south":{ "left":"right",      "right":"left",       "forward":"backward",     "backward":"forward"  }
-    }
-    m,n=graph_dimensions
-    for i in range(len(node_list)):
+    global heading_direction_conversion_directory
+
+    n,m=graph_dimensions
+    for i in range(len(node_list)-1):
         current_node = node_list[i]
-        next_node = node_list[i]
-
+        next_node = node_list[i+1]
+        
         if  current_node - next_node == 1:
-            heading = "west"
-            
+            next_heading = "west"
         elif current_node - next_node == -1:
-            heading = "east"
-
-        elif current_node - next_node == m:
-            heading = "north"
-
-        elif current_node - next_node == -m:
-            heading = " south"
-
+            next_heading = "east"
+        elif current_node - next_node == n:
+            next_heading = "north"
+        elif current_node - next_node == -n:
+            next_heading = "south"
         else:
-            return ValueError("Non rectangluar graph, this algorithm does not apply... make your own!")
-        translated_node_list.append(heading_direction_conversion_directory[heading][previous_direction])
-        previous_direction = translated_node_list[-1]
-    
-    
-    return translated_node_list
+            return ValueError("You serve zero purpose!")
 
+        # this contains directions
+        turn_list.append(heading_direction_conversion_directory[next_heading][previous_direction])
+        previous_direction = next_heading
+    
+    return turn_list
 
 def plot_grid(n, path=None, new_path=None, obstacle=None):
     """
@@ -235,32 +237,34 @@ def lighten_color(hex_color, amount=0.1):
     lighter_hex = mcolors.to_hex(lighter_rgb)
     return lighter_hex
 
-def setup(graph_dimensions= [2,3], start=0, end=None, initial_direction = "forward" ):
-    n,m = graph_dimensions
+def setup(n, m, start=0, end=None, initial_direction = "forward" ):
     if end == None:
         end = n*m-1
     graph = set_graph(n, m) 
     _ ,node_path = dijkstra(graph, start, end)
-    turning_path = path_node_to_turn_translation(node_path,[m,n], initial_direction )
+    turning_path = path_node_to_turn_translation(node_path,[n,m], initial_direction )
     return graph, node_path, turning_path
 
 def obstacle_detect_behavior(n,m,graph,node_path,translated_node_list,last_node_reached_idx,last_node_targeted_idx):
-    last_direction = translated_node_list[last_node_reached_idx] # maybe fix indexing
-    #We do a 180 turn
-    if last_direction == "forward":
-        last_direction_inverted = "backward"
-    elif  last_direction == "backward":
-        last_direction_inverted = "forward"
-    elif  last_direction == "left":
-        last_direction_inverted = "right" 
-    elif  last_direction == "right":
-        last_direction_inverted = "left"    
+
+    # THESE VALUES ARE REVERSED FROM path_node_to_turn_translation
+    # since we turn around
+    if  last_node_targeted_idx - last_node_reached_idx == 1:
+        last_direction_inverted = "west"
+    elif last_node_targeted_idx - last_node_reached_idx == -1:
+        last_direction_inverted = "east"
+    elif last_node_targeted_idx - last_node_reached_idx == n:
+        last_direction_inverted = "north"
+    elif last_node_targeted_idx - last_node_reached_idx == -n:
+        last_direction_inverted = "south"
+    else:
+        return ValueError("A M O G U S")
 
     node_number = last_node_reached_idx
-    i,j = node_number % n, -np.floor(node_number / m)
-    updated_graph = update_graph_on_obstacle(graph, i, j)
-    _ ,updated_node_path = dijkstra(updated_graph, last_node_targeted_idx, node_path[-1])
-    updated_turning_path = path_node_to_turn_translation(updated_node_path,[m,n], last_direction_inverted)
+    #i,j = node_number % n, int(np.floor(node_number / m)) 
+    updated_graph = update_graph_on_obstacle(graph, last_node_reached_idx, last_node_targeted_idx)
+    _ ,updated_node_path = dijkstra(updated_graph, last_node_reached_idx, node_path[-1])
+    updated_turning_path = path_node_to_turn_translation(updated_node_path,[n,m], last_direction_inverted)
     return  updated_graph,updated_node_path,updated_turning_path #not sure about these outputs maybe need more, needs a pressure test
 
 if __name__ == "__main__":
@@ -273,7 +277,7 @@ if __name__ == "__main__":
     graph, node_path, turning_path = setup(graph_dimensions, 3, 2, "forward" )
         # turning_path is a list of intersection directions
     plot_current_position_on_grid(graph_dimensions, 0, [[0]], [[0]])
-    
+
     # # Select origin and destination
     # origin, destination = 0, n * n - 1
 
