@@ -8,11 +8,11 @@ Template for
 <html>
 <head>
 
-	<title>ECE 5990 | Awesome Project </title>
+	<title>LineZoomer </title>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
-	<meta name="keywords" content="Gautham Ponnu, awesome, project" />
-	<meta name="description" content="This webpage is gp348 awesome project report for ECE 5990 at Cornell University" />
+	<meta name="keywords" content="Lawrence Atienza, Xavier Mc Court, line-following/graph traversing robot" />
+	<meta name="description" content="This webpage is our project report for ECE 5725 at Cornell University" />
 	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.7.0/build/reset-fonts-grids/reset-fonts-grids.css" media="all" />
 	<link rel="stylesheet" type="text/css" href="CSS/report.css" media="all" />
 	<link rel="stylesheet" href="CSS/project.css" type="text/css" media="screen, projection" />
@@ -24,8 +24,9 @@ Template for
 		<div id="hd">
 			<div class="yui-gc">
 				<div class="yui-u first">
-					<h1>Awesome Project</h1>
-					<h2>Your name</h2>
+					<h1>The LineZoomer</h1>
+					<h2>ECE 5725 Fall 2024 project </h2>
+					<h3>by Lawrience Atienza (laa236), Xavier Mc Court (xmm3) </h3>
 				</div>
 
 			</div><!--// .yui-gc -->
@@ -38,20 +39,30 @@ Template for
 
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
-								<h2>Introduction</h2> <!--// put your heading here -->
+								<h2>Introduction</h2> 
 							</div>
 							<div class="yui-u">
-								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+								<p>Our project was to build an autonomous, grid traversing robot, capable of reacting to situations like a blocked road and always taking the most optimal path. We aimed to do this by implementing a mix of line following, intersection detection and object detection on a Rpi based wheeled robot. Hence the LineZoomer was born. 
 								</p> <!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
 
 						<div class="yui-gf"> <!--// This is another section -->
 							<div class="yui-u first">
-								<h2>Objective</h2> <!--// put your heading here -->
+								<h2>Project Objectives:</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+								<p>
+									-be able to detect a line
+									-be able to detect an intersection
+									-be able to detect an object in the robot's path and react to it properly (no collision)
+									-be able to precisely control the robot's trajectory based on real time inputs from it's sensors 
+									-make the robot relisilient to various lighting conditions and environments
+									-ensure the robot ends gracefully / abandons it's mission when edge case solutionless solutions, avoid any unwanted behavior
+									-make the robot completely autonomous (once inputed with a grid geometry, his point of origin and his destination) and launched
+									-bring the previous points together to create the LineZoomer			
+									-learn more about embedded and have fun!
+
 								</p> <!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
@@ -59,6 +70,14 @@ Template for
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
 								<h2>Design</h2> <!--// put your heading here -->
+								<h2>Hardware Design</h2> <!--// put your heading here -->
+							</div>
+							<div class="yui-u">
+								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+								</p> <!--// Put Content here -->
+							</div>
+							<div class="yui-u first">
+								<h2>Hardware Design</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
 								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
