@@ -8,11 +8,11 @@ Template for
 <html>
 <head>
 
-	<title>ECE 5990 | Awesome Project </title>
+	<title>LineZoomer </title>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
-	<meta name="keywords" content="Gautham Ponnu, awesome, project" />
-	<meta name="description" content="This webpage is gp348 awesome project report for ECE 5990 at Cornell University" />
+	<meta name="keywords" content="Lawrence Atienza, Xavier Mc Court, line-following/graph traversing robot" />
+	<meta name="description" content="This webpage is our project report for ECE 5725 at Cornell University" />
 	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.7.0/build/reset-fonts-grids/reset-fonts-grids.css" media="all" />
 	<link rel="stylesheet" type="text/css" href="CSS/report.css" media="all" />
 	<link rel="stylesheet" href="CSS/project.css" type="text/css" media="screen, projection" />
@@ -24,8 +24,9 @@ Template for
 		<div id="hd">
 			<div class="yui-gc">
 				<div class="yui-u first">
-					<h1>Awesome Project</h1>
-					<h2>Your name</h2>
+					<h1>The LineZoomer</h1>
+					<h2>ECE 5725 Fall 2024 project </h2>
+					<h3>by Lawrience Atienza (laa236), Xavier Mc Court (xmm3) </h3>
 				</div>
 
 			</div><!--// .yui-gc -->
@@ -38,20 +39,30 @@ Template for
 
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
-								<h2>Introduction</h2> <!--// put your heading here -->
+								<h2>Introduction</h2> 
 							</div>
 							<div class="yui-u">
-								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+								<p>Our project was to build an autonomous, grid traversing robot, capable of reacting to situations like a blocked road and always taking the most optimal path. We aimed to do this by implementing a mix of line following, intersection detection and object detection on a Rpi based wheeled robot. Hence the LineZoomer was born. 
 								</p> <!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
 
 						<div class="yui-gf"> <!--// This is another section -->
 							<div class="yui-u first">
-								<h2>Objective</h2> <!--// put your heading here -->
+								<h2>Project Objectives:</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+								<p>
+									-be able to detect a line
+									-be able to detect an intersection
+									-be able to detect an object in the robot's path and react to it properly (no collision)
+									-be able to precisely control the robot's trajectory based on real time inputs from it's sensors 
+									-make the robot relisilient to various lighting conditions and environments
+									-ensure the robot ends gracefully / abandons it's mission when edge case solutionless solutions, avoid any unwanted behavior
+									-make the robot completely autonomous (once inputed with a grid geometry, his point of origin and his destination) and launched
+									-bring the previous points together to create the LineZoomer			
+									-learn more about embedded and have fun!
+
 								</p> <!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
@@ -59,6 +70,52 @@ Template for
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
 								<h2>Design</h2> <!--// put your heading here -->
+								<h2>Software Design</h2> <!--// put your heading here -->
+							</div>
+							<div class="yui-u">
+								<p>Our implementation of the LineZoomer works by line following until it detects an intersection, it then looks at the turning commands given by it's algorithm in order to decide where it needs to turn next once it has reached an intersection. 
+									We will start by detailing how it determines the path it needs to follow.
+									Our software start by generating a rectangular graph of dimensions n*m. It is entirely represented by it's agency list, in other owrds as a (nm,nm) matrix G wjer the Gi,j coefficient represents the distance between the directional path going from node i to node j. Hence in the case of our project our matrix is symmetrical and all coefficients being set to +inifinty (infinite distance meaning that there is no path between the two nodes) and coefficients Gi,i+1 Gi,i-1 Gi,i-m Gi,i+m  being set to 1. 
+									We then select an starting point and a destination for our robot out of the various nodes of our rectangular graph and use Dijkstra's algorithm to find the optimal path between these nodes.
+									Dijkstra's algorithm works along the lines of the foollowing pseudo code: 
+								function Dijkstra(graph, source):
+									distance = [infinity] * len(graph)
+									distance[source] = 0
+									priority_queue = [(0, source)]  # (distance, node)
+									
+									while priority_queue is not empty:
+										current_distance, current_node = priority_queue.pop_min()
+										
+										if current_distance > distance[current_node]:
+											continue  # Skip if already finalized
+										
+										for neighbor, weight in graph[current_node]:
+											distance_via_current = current_distance + weight
+											
+											if distance_via_current < distance[neighbor]:
+												distance[neighbor] = distance_via_current
+												priority_queue.add((distance_via_current, neighbor))
+									
+									return distance
+									We coded the algorithm with a priority queue implemented as a binary heap resulting in an algorithm complexity of O((V+E)logV) with VV = n*m: Number of vertices and V = 2n*m: Number of edges.
+									In order to handle the case when the robot encouters an obstacle on the optimal bath it wants to take, we simply update the distance value of the given edge to + infinity in our graph representation, return to the previous node and re-calculate a new optimal path by calling Dijkstra's algorithm with our current node as new starting point and the same destination as before. 
+									Our current algorithm returns the path the robot as a list of nodes he has to go to in order to reach the destination optimally. However our robot takes as an input durning directions such a "left", "right", "forward", "backward" hence we have to write a conversion algorithm. This algorithm uses the cardinality of the next node ("North", "East", "South", "West" and the current orientation of the robot that is deduced from the turns performed up to now and the initial orientation of the robot with regards to the grid that is an input variable, in order to determine the next relative direction the robot has to turn in).
+									We also wrote a code that gives a visual representation of the robot as he traverses the algorithm. It takes into the account the starting point of the robot, it's current position,  the destination, any objects found during exploration and the various paths that have been tried in the past as well as the current one it is following. 
+
+									We will now detail how it line follow and detects intersections. 
+									Our robot uses two separate image processing functions in order to adequately line follow.
+									We start by processing the image and identifying the black lines to follow in it, this is done by many steps that vary depending on which of the following algorithms are used, but they generally involve cropping the iamge to an adapted field of view to remove any far away distractions and shawing due to the angles, blurring it to remove details ( ameasure to  try and remove small shadows, texutre of the ground, texture of the tape that forms the black line, small halos of light reflecting of the ground or tape,...), grayscaling it, before applying a binary mask to separate what should be the black line from the background. We then apply some fine tuned  kernel size erosion and dilatation to try and further remove noise in the backa nd white sections of the binary masked iamge.  
+									 We the plot the straight line that best fitst the aforemetnioned band. When it off center from the line (aka the line does not intersect the bottom of the central third of the robot's field of vision) ,not aligned at all, or simply doesn't detect any clear black line it uses our first following pardigm.
+									  It detects the biggest black shape image and aims towards the barycenter of black that is visible, this ensure the robot keeps going forwards all while it turn towards the line, getting it back into alignement with the line. 
+									  On the other hand when the robot is already pretty well aligned with the line it simply tries to line up as best as possible with it and keep heading forwards whilst staying on trap.
+
+									When it comes to intersection detection we simply foind countour of the varuous black shapes on the iamge and study the complexity (number of edges) of the shape. We apply some filtering such as a minimal aspect ration between the size od the edges and the shape in order to stop shadow or blurring to add small non linearities to the shape that would count towards it's nmber of edges. When a shape of more than 5 edges is detected on the iamge, the program sends back an intersection detected glag to the robot. This works because all junctions we to deal with ahve at least 6 edges (Corner), 8 edges (T-junction) and  edhes (cross intersection).
+									
+								</p> <!--// Put Content here -->
+								<!--// Put Content here, Put the FSM model here  --> 
+							</div>
+							<div class="yui-u first">
+								<h2>Hardware Design</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
 								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
@@ -71,8 +128,11 @@ Template for
 								<h2>Testing</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-								</p> <!--// Put Content here -->
+								<p>We planned and applied a rigourous testing strategy during our project, ensuring that every previous part of our project was fully functional before attempting to implment "the next thing":
+									We started by ensuring our various components were functional and worked with our RPi. we checked oir control over the motor rotation and servomotor pwm signal receival. We then ensured we could receive the expected signal from the ultrasound sensor. 
+								Once the robot was build and an MVP version of the code written we started testing our robot on small grids and interesction on the ground. These first tests led us to make thing easier on ourselves by aiming to use similar lighting conditions each time (if possible multiple light sources all aournd the robot to remove as many shadows as possible, making our grid on some taped together white sheets to ensure a smoothed, not too textured  and perfectly white surface wihout any designs on it.) These tests also lead us to fesign beigger grids for our following testing, as on smaller girds the intersection detection part of the algorithm always be active as the robot would almost always see the nest intersection when he was still on the previous node, this means that despite the robot completing it's task it wasn't making use of it's line folllowing capabilities. 
+							We thouroughly tested each new feature we added to our MVP as we tried to improve it's initally low speed and aforementioned guidance problems. When we had settled in a satisfactory final grid and final performance state of the robot we performed a battery of tests to ensure that it was working as expected. We tested positions of the staring, and ending points as well as various objects on the grid. We also did some edge case testing, to ensure that the robot behaved safely when for example  all edges leading to it's target node were blocked by an obstacle, leadinf it to give up and stop, or simply when it's starting and ending positions were the same. Once these tests were successfully pasted we performed some more testing by varying the rooms we set up our graph in order to observe it's performance in various different lighting conditions. We were surprised as our final code was a lot more resilient than we initially expected, leaps and bounds above our inital mvp performance as our robot succeded all of the reasonable lighting tests we gave it. Even in rooms with rather directional lighting compared to the robot's positon, hence creating shadows in our robot's line of sight our robot manged to reach it's destination safely, this was a far cry from our inital tests where we had to hold a phone lamp by hand above the camera of our robot in order to remove and shadows in that area. 
+													</p> <!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
 
@@ -103,8 +163,27 @@ Template for
 								<h2>Conclusion</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>Yay !!! Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-								</p> <!--// Put Content here -->
+								<p> In short, except from installing our initially planned self targetting a nerf-dart launching system that would have made the LineZoomer into the LineZoomingTank, we managed to obtain all the functioanlities we expected out of our robot, it even turned out to be more resilient than expected. WIth a near 100% success rate in all the tests we performed, even in difficult lighting coditions.
+									Future impvoement to our LineZOomer would probably targetted at improving it's speed as it is currently an overly cautious robot that refuses to go forwards much until it's pefectly aligned with the line. This often leadint it to perform many- time consuming micro adjustments before any decisive push forward. With more time we would also have like to improve the user interface, for example by displaying our visual represenation of the graph, the paths attempted, the position of hte obstaclesa nd the current position of the robot on the Pitft screen in real time. We would also have liked put hte starting buttong for out robot on the Pitft screen. With more time we could have tried to implment out tank upgrade, where our robot once hacing reached it's final destination woudld start turning on itself, as a kind of centry turret, in order to find (with it's camera and maybe some face recognition) and shoot a nerf pellet at the neighbouring target. 							</p> 
+									<!--// Put Content here -->
+							</div>
+						</div><!--// Your section has ended -->
+
+						<div class="yui-gf"> <!--// This is a section -->
+							<div class="yui-u first">
+								<h2>Work Distribution</h2> <!--// put your heading here -->
+							</div>
+							<div class="yui-u">
+								<p> Lawrence took care of the most of the hardware testinf and setup as well as the actual robot's "brain", whilst Xavier handled all of the iamge processing, graph creation, optimal path calculation and translation as well as the step by step visualization of the robot's position. We both equally participated in the debugging and testing of each iteration of our robot, proposing out ideas on how to improve it even on parts that we didn't directly code. 									<!--// Put Content here -->
+							</div>
+						</div><!--// Your section has ended -->
+						
+						<div class="yui-gf"> <!--// This is a section -->
+							<div class="yui-u first">
+								<h2>Git hub link:</h2> <!--// put your heading here -->
+							</div>
+							<div class="yui-u">
+								<p> All our code is open source, feem free to use it to tryan make your own robot our improve our current one! Here's a link to the github repo we created: 									<!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
 
