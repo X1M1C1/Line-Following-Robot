@@ -72,47 +72,72 @@ Template for
 								<h2>Software Design</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>Our implementation of the LineZoomer works by line following until it detects an intersection, it then looks at the turning commands given by it's algorithm in order to decide where it needs to turn next once it has reached an intersection. 
-									We will start by detailing how it determines the path it needs to follow.
-									Our software start by generating a rectangular graph of dimensions n*m. It is entirely represented by it's agency list, in other owrds as a (nm,nm) matrix G wjer the Gi,j coefficient represents the distance between the directional path going from node i to node j. Hence in the case of our project our matrix is symmetrical and all coefficients being set to +inifinty (infinite distance meaning that there is no path between the two nodes) and coefficients Gi,i+1 Gi,i-1 Gi,i-m Gi,i+m  being set to 1. 
-									We then select an starting point and a destination for our robot out of the various nodes of our rectangular graph and use Dijkstra's algorithm to find the optimal path between these nodes.
-									Dijkstra's algorithm works along the lines of the foollowing pseudo code: 
-								function Dijkstra(graph, source):
-									distance = [infinity] * len(graph)
-									distance[source] = 0
-									priority_queue = [(0, source)]  # (distance, node)
-									
-									while priority_queue is not empty:
-										current_distance, current_node = priority_queue.pop_min()
-										
-										if current_distance > distance[current_node]:
-											continue  # Skip if already finalized
-										
-										for neighbor, weight in graph[current_node]:
-											distance_via_current = current_distance + weight
-											
-											if distance_via_current < distance[neighbor]:
-												distance[neighbor] = distance_via_current
-												priority_queue.add((distance_via_current, neighbor))
-									
-									return distance
-									We coded the algorithm with a priority queue implemented as a binary heap resulting in an algorithm complexity of O((V+E)logV) with VV = n*m: Number of vertices and V = 2n*m: Number of edges.
-									In order to handle the case when the robot encouters an obstacle on the optimal bath it wants to take, we simply update the distance value of the given edge to + infinity in our graph representation, return to the previous node and re-calculate a new optimal path by calling Dijkstra's algorithm with our current node as new starting point and the same destination as before. 
-									Our current algorithm returns the path the robot as a list of nodes he has to go to in order to reach the destination optimally. However our robot takes as an input durning directions such a "left", "right", "forward", "backward" hence we have to write a conversion algorithm. This algorithm uses the cardinality of the next node ("North", "East", "South", "West" and the current orientation of the robot that is deduced from the turns performed up to now and the initial orientation of the robot with regards to the grid that is an input variable, in order to determine the next relative direction the robot has to turn in).
-									We also wrote a code that gives a visual representation of the robot as he traverses the algorithm. It takes into the account the starting point of the robot, it's current position,  the destination, any objects found during exploration and the various paths that have been tried in the past as well as the current one it is following. 
-
-									We will now detail how it line follow and detects intersections. 
-									Our robot uses two separate image processing functions in order to adequately line follow.
-									We start by processing the image and identifying the black lines to follow in it, this is done by many steps that vary depending on which of the following algorithms are used, but they generally involve cropping the iamge to an adapted field of view to remove any far away distractions and shawing due to the angles, blurring it to remove details ( ameasure to  try and remove small shadows, texutre of the ground, texture of the tape that forms the black line, small halos of light reflecting of the ground or tape,...), grayscaling it, before applying a binary mask to separate what should be the black line from the background. We then apply some fine tuned  kernel size erosion and dilatation to try and further remove noise in the backa nd white sections of the binary masked iamge.  
-									 We the plot the straight line that best fitst the aforemetnioned band. When it off center from the line (aka the line does not intersect the bottom of the central third of the robot's field of vision) ,not aligned at all, or simply doesn't detect any clear black line it uses our first following pardigm.
-									  It detects the biggest black shape image and aims towards the barycenter of black that is visible, this ensure the robot keeps going forwards all while it turn towards the line, getting it back into alignement with the line. 
-									  On the other hand when the robot is already pretty well aligned with the line it simply tries to line up as best as possible with it and keep heading forwards whilst staying on trap.
-
-									When it comes to intersection detection we simply foind countour of the varuous black shapes on the iamge and study the complexity (number of edges) of the shape. We apply some filtering such as a minimal aspect ration between the size od the edges and the shape in order to stop shadow or blurring to add small non linearities to the shape that would count towards it's nmber of edges. When a shape of more than 5 edges is detected on the iamge, the program sends back an intersection detected glag to the robot. This works because all junctions we to deal with ahve at least 6 edges (Corner), 8 edges (T-junction) and  edhes (cross intersection).
-									
-								</p> <!--// Put Content here -->
-								<!--// Put Content here, Put the FSM model here  --> 
+								<p>
+									Our implementation of the LineZoomer works by line-following until it detects an intersection. It then refers to the turning commands generated by its algorithm to decide where it needs to turn at the intersection.
+								</p>
+								<p>
+									<strong>Pathfinding:</strong><br>
+									Our software starts by generating a rectangular graph of dimensions <em>n</em> x <em>m</em>. This graph is represented by its adjacency list, in other words, as a (<em>nm</em>, <em>nm</em>) matrix <em>G</em>, where the coefficient <em>G<sub>i,j</sub></em> represents the distance of the directional path from node <em>i</em> to node <em>j</em>. In our project, the matrix is symmetrical, with all coefficients initially set to infinity (representing no path between nodes), except for <em>G<sub>i,i+1</sub></em>, <em>G<sub>i,i-1</sub></em>, <em>G<sub>i,i-m</sub></em>, and <em>G<sub>i,i+m</sub></em>, which are set to 1.
+								</p>
+								<p>
+									We then select a starting point and a destination from the nodes in the graph. Dijkstra's algorithm is used to find the optimal path between these nodes.
+								</p>
+								<p>
+									<strong>Dijkstra's Algorithm:</strong><br>
+									Dijkstra's algorithm works as follows:
+									<pre>
+function Dijkstra(graph, source):
+    distance = [infinity] * len(graph)
+    distance[source] = 0
+    priority_queue = [(0, source)]  # (distance, node)
+    
+    while priority_queue is not empty:
+        current_distance, current_node = priority_queue.pop_min()
+        
+        if current_distance > distance[current_node]:
+            continue  # Skip if already finalized
+        
+        for neighbor, weight in graph[current_node]:
+            distance_via_current = current_distance + weight
+            
+            if distance_via_current < distance[neighbor]:
+                distance[neighbor] = distance_via_current
+                priority_queue.add((distance_via_current, neighbor))
+    
+    return distance
+									</pre>
+									We implemented the algorithm using a priority queue with a binary heap, resulting in a time complexity of O((<em>V</em> + <em>E</em>) log <em>V</em>), where <em>V</em> = <em>n</em> x <em>m</em> (number of vertices) and <em>E</em> = 2<em>n</em> x <em>m</em> (number of edges).
+								</p>
+								<p>
+									If the robot encounters an obstacle on the optimal path, we update the distance value of the given edge to infinity in the graph representation, return to the previous node, and recalculate a new optimal path. This is done by rerunning Dijkstra's algorithm with the current node as the new starting point and the same destination.
+								</p>
+								<p>
+									Our algorithm returns the path as a list of nodes the robot must follow to reach the destination. However, the robot requires directions such as "left," "right," "forward," and "backward." A conversion algorithm determines these directions by using the cardinal orientation of the next node ("North," "East," "South," "West") and the robot's current orientation, which is deduced from its prior turns and initial orientation.
+								</p>
+								<p>
+									We also implemented a visualization tool that tracks the robot's movement, displaying its starting point, current position, destination, detected obstacles, and paths (both attempted and current).
+								</p>
+								<p>
+									<strong>Line Following:</strong><br>
+									Our robot uses two image-processing algorithms for line-following:
+									<ul>
+										<li>After processing the image, we identify black lines using steps such as cropping the image to focus on the relevant field of view, blurring to reduce noise, converting to grayscale, and applying a binary mask. This is followed by erosion and dilation to remove residual noise.</li>
+										<li>We then fit a straight line to the detected band. If the robot is misaligned (the line is off-center or missing), it uses a "barycenter" approach, aiming toward the largest black region detected.</li>
+										<li>When aligned, the robot maintains its trajectory by following the fitted line.</li>
+									</ul>
+								</p>
+								<p>
+									<strong>Intersection Detection:</strong><br>
+									To detect intersections, we identify the contours of black shapes in the image and analyze their complexity (number of edges). We apply filtering based on aspect ratios to ignore noise (e.g., shadows or minor irregularities). A detected shape with more than five edges indicates an intersection. For instance:
+									<ul>
+										<li>6 edges: Corner</li>
+										<li>8 edges: T-junction</li>
+										<li>12 edges: Cross-intersection</li>
+									</ul>
+									When an intersection is detected, the robot flags this event and determines the next turn based on its pathfinding logic.
+								</p>
 							</div>
+
 							<div class="yui-u first">
 								<h2>Hardware Design</h2> <!--// put your heading here -->
 							</div>
@@ -184,16 +209,29 @@ Template for
 
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
-								<h2>Testing</h2> <!--// put your heading here -->
+								<h2>Testing</h2> <!--// Put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>We planned and applied a rigourous testing strategy during our project, ensuring that every previous part of our project was fully functional before attempting to implment "the next thing":
-									We started by ensuring our various components were functional and worked with our RPi. we checked oir control over the motor rotation and servomotor pwm signal receival. We then ensured we could receive the expected signal from the ultrasound sensor. 
-								Once the robot was build and an MVP version of the code written we started testing our robot on small grids and interesction on the ground. These first tests led us to make thing easier on ourselves by aiming to use similar lighting conditions each time (if possible multiple light sources all aournd the robot to remove as many shadows as possible, making our grid on some taped together white sheets to ensure a smoothed, not too textured  and perfectly white surface wihout any designs on it.) These tests also lead us to fesign beigger grids for our following testing, as on smaller girds the intersection detection part of the algorithm always be active as the robot would almost always see the nest intersection when he was still on the previous node, this means that despite the robot completing it's task it wasn't making use of it's line folllowing capabilities. 
-							We thouroughly tested each new feature we added to our MVP as we tried to improve it's initally low speed and aforementioned guidance problems. When we had settled in a satisfactory final grid and final performance state of the robot we performed a battery of tests to ensure that it was working as expected. We tested positions of the staring, and ending points as well as various objects on the grid. We also did some edge case testing, to ensure that the robot behaved safely when for example  all edges leading to it's target node were blocked by an obstacle, leadinf it to give up and stop, or simply when it's starting and ending positions were the same. Once these tests were successfully pasted we performed some more testing by varying the rooms we set up our graph in order to observe it's performance in various different lighting conditions. We were surprised as our final code was a lot more resilient than we initially expected, leaps and bounds above our inital mvp performance as our robot succeded all of the reasonable lighting tests we gave it. Even in rooms with rather directional lighting compared to the robot's positon, hence creating shadows in our robot's line of sight our robot manged to reach it's destination safely, this was a far cry from our inital tests where we had to hold a phone lamp by hand above the camera of our robot in order to remove and shadows in that area. 
-													</p> <!--// Put Content here -->
+								<p>
+									We planned and executed a rigorous testing strategy during our project, ensuring that every component was fully functional before progressing to the next phase. 
+								</p>
+								<p>
+									We began by testing individual components to verify their functionality and compatibility with the Raspberry Pi (RPi). Specifically, we tested our control over motor rotation and the receipt of PWM signals by the servomotor. Additionally, we ensured that the ultrasound sensor provided accurate and reliable signals.
+								</p>
+								<p>
+									Once the robot was built and a minimum viable product (MVP) version of the code was written, we tested the robot on small grids and intersections. These initial tests highlighted challenges and informed improvements to our setup. To simplify testing, we aimed to use consistent lighting conditions, employing multiple light sources around the robot to reduce shadows. Additionally, we created grids using taped-together white sheets to ensure a smooth, uniform surface without textures or designs.
+								</p>
+								<p>
+									Early tests revealed that smaller grids caused the intersection detection algorithm to activate too frequently, as the robot could often see the next intersection while still navigating the current node. This meant that, although the robot completed its task, it did not fully utilize its line-following capabilities. To address this, we designed larger grids for subsequent tests.
+								</p>
+								<p>
+									We thoroughly tested each new feature added to our MVP, addressing issues such as low speed and guidance inaccuracies. Once we finalized the grid setup and achieved satisfactory robot performance, we conducted a comprehensive battery of tests. These tests included varying the starting and ending points, placing obstacles on the grid, and exploring edge cases. For example, we tested scenarios where all paths to the target node were blocked, prompting the robot to safely give up and stop, as well as cases where the starting and ending positions were the same.
+								</p>
+								<p>
+									After successfully passing these tests, we expanded testing to different rooms with varied lighting conditions. We were pleasantly surprised by the resilience of our final code, which performed significantly better than the initial MVP. The robot succeeded in all reasonable lighting scenarios, even in rooms with directional lighting that created shadows in its line of sight. This was a remarkable improvement compared to our early tests, where we had to manually hold a phone lamp above the robot’s camera to eliminate shadows.
+								</p>
 							</div>
-						</div><!--// Your section has ended -->
+						</div> <!--// Your section has ended -->
 
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
@@ -266,14 +304,30 @@ Template for
 
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
-								<h2>Conclusion</h2> <!--// put your heading here -->
+								<h2>Testing</h2> <!--// Put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p> In short, except from installing our initially planned self targetting a nerf-dart launching system that would have made the LineZoomer into the LineZoomingTank, we managed to obtain all the functioanlities we expected out of our robot, it even turned out to be more resilient than expected. WIth a near 100% success rate in all the tests we performed, even in difficult lighting coditions.
-									Future impvoement to our LineZOomer would probably targetted at improving it's speed as it is currently an overly cautious robot that refuses to go forwards much until it's pefectly aligned with the line. This often leadint it to perform many- time consuming micro adjustments before any decisive push forward. With more time we would also have like to improve the user interface, for example by displaying our visual represenation of the graph, the paths attempted, the position of hte obstaclesa nd the current position of the robot on the Pitft screen in real time. We would also have liked put hte starting buttong for out robot on the Pitft screen. With more time we could have tried to implment out tank upgrade, where our robot once hacing reached it's final destination woudld start turning on itself, as a kind of centry turret, in order to find (with it's camera and maybe some face recognition) and shoot a nerf pellet at the neighbouring target. 							</p> 
-									<!--// Put Content here -->
+								<p>
+									We planned and executed a rigorous testing strategy during our project, ensuring that every component was fully functional before progressing to the next phase. 
+								</p>
+								<p>
+									We began by testing individual components to verify their functionality and compatibility with the Raspberry Pi (RPi). Specifically, we tested our control over motor rotation and the receipt of PWM signals by the servomotor. Additionally, we ensured that the ultrasound sensor provided accurate and reliable signals.
+								</p>
+								<p>
+									Once the robot was built and a minimum viable product (MVP) version of the code was written, we tested the robot on small grids and intersections. These initial tests highlighted challenges and informed improvements to our setup. To simplify testing, we aimed to use consistent lighting conditions, employing multiple light sources around the robot to reduce shadows. Additionally, we created grids using taped-together white sheets to ensure a smooth, uniform surface without textures or designs.
+								</p>
+								<p>
+									Early tests revealed that smaller grids caused the intersection detection algorithm to activate too frequently, as the robot could often see the next intersection while still navigating the current node. This meant that, although the robot completed its task, it did not fully utilize its line-following capabilities. To address this, we designed larger grids for subsequent tests.
+								</p>
+								<p>
+									We thoroughly tested each new feature added to our MVP, addressing issues such as low speed and guidance inaccuracies. Once we finalized the grid setup and achieved satisfactory robot performance, we conducted a comprehensive battery of tests. These tests included varying the starting and ending points, placing obstacles on the grid, and exploring edge cases. For example, we tested scenarios where all paths to the target node were blocked, prompting the robot to safely give up and stop, as well as cases where the starting and ending positions were the same.
+								</p>
+								<p>
+									After successfully passing these tests, we expanded testing to different rooms with varied lighting conditions. We were pleasantly surprised by the resilience of our final code, which performed significantly better than the initial MVP. The robot succeeded in all reasonable lighting scenarios, even in rooms with directional lighting that created shadows in its line of sight. This was a remarkable improvement compared to our early tests, where we had to manually hold a phone lamp above the robot’s camera to eliminate shadows.
+								</p>
 							</div>
-						</div><!--// Your section has ended -->
+						</div> <!--// Your section has ended -->
+						
 
 						<div class="yui-gf"> <!--// This is a section -->
 							<div class="yui-u first">
