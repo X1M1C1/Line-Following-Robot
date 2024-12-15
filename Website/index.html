@@ -171,22 +171,27 @@ Template for
 							</div>
 							<div class="yui-u">
 								<p>While we managed to fix most problems that appeared, there were some issues that we could not handle.
-									- The camera has a small FOV, and thus it can be difficult to acquire the line
+									Camera
+									- The camera has a small FOV, and thus it can be difficult to acquire the line.
+									- The robot does not handle small grids well, as it cannot see closer than ~5.5 in away from the axles. Grids of a smaller shape cannot be traversed properly.
+									Detection
 									- The filters we used are resilient, but have issues when the environment has bad lighting. We managed to make it resilient enough to not need perfect lighting, but some issues still remain. 
 									- The filters require a dark line on a light grid.
-									- The robot does not handle small grids well, as it cannot see closer than ~5.5 in away from the axles. Grids of a smaller shape cannot be traversed properly.
-									- The robot also has a center of rotation in the front, and thus requires more space to turn than would be expected, being another reason why small grids do not work.
-									- While the robot can follow gently-curved paths and irregular graphs, it can only deal with intersections at 90 degrees.
 									- The robot cannot detect chasms, only obstacles.
-									- The robot turns a little when going straight a long distance due to non-perfect wheel alignment. We mitigate this by not driving in a straight light for long periods of time.
-									- The ultrasonic sensor may not detect objects that would hit the top of the robot, due to its position on the lower half of the chassis.
-									- The robot has no controls on itself, and can only be controlled via SSH.
-									- when turns start at very specific angles which result in a destination angle near 360 (or 0) degrees, the instability of the Hall sensors can result in the robot not moving far enough (terminating move command early).
-									- The robot is leashed to a power pack, which must be moved when the robot moves far enough away.
 									- In certain scenarios when the robot rapidly switches between the barycenter and line center detection algorithms, wiggling may occur. The problem eventually resolves itself, as the robot is nudged forward on every wiggle, but it drastically slows down movement.
-									- The robot needs flat terrain (with decent traction). Turning on varied terrain yields inconsistent end angles, and terrain shadows may interfere with detection.
 									- Lines which are not simple rectangles and are more complex (have more edges), can be falsely identified as intersections.
+									- The robot needs flat terrain (with decent traction). Turning on varied terrain yields inconsistent end angles, and terrain shadows may interfere with detection.
+									Movement
+									- While the robot can follow gently-curved paths and irregular graphs, it can only deal with intersections at 90 degrees.
+									- The robot also has a center of rotation in the front, and thus requires more space to turn than would be expected, being another reason why small grids do not work.
+									- The robot turns a little when going straight a long distance due to non-perfect wheel alignment. We mitigate this by not driving in a straight light for long periods of time.
+									- When turns start at very specific angles which result in a destination angle near 360 (or 0) degrees, the instability of the Hall sensors can result in the robot not moving far enough (terminating move command early).
 									- Applying any external rotation to the wheels during precise forwards movement / precise turning, can cause incorrect movement.
+									Ultrasonic sensor
+									- The ultrasonic sensor may not detect objects that would hit the top of the robot, due to its position on the lower half of the chassis.
+									Controls / Pathfinding
+									- The robot has no controls on itself, and can only be controlled via SSH.
+									- The robot is leashed to a power pack, which must be moved when the robot moves far enough away.
 									- The edge case of having the start node be the same as the end node is unhandled.   
 								</p> <!--// Put Content here -->
 							</div>
