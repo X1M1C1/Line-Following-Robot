@@ -118,7 +118,24 @@ Template for
 								<h2>Hardware Design</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+								<p>Our robot uses several sensors to gather data, and servos to interact with the world. 
+									For line detection, we use a Raspberry Pi Camera module mounted with rubber bands on two popsticle sticks. While the sticks are hot glued on, the rubber bands allow for the camera to be adjusted. We use folded sticky notes to aim the camera downwards towards the grid.
+									Our line detection algorithm is defined above, but our robot only needs the detected line angle for line following. It simply angles back towards the line if the detected angle is larger than +/-30 degrees. If the robot is with this band, it simply moves forwards a bit.
+									In order to protect the robot from driving into the void if no line is spotted, we save the most recent turn direction. If we cannot see a line, we simply turn in the reverse direction until the line is found. This helps not only during normal line following operation, but also when we overshoot at 90 degree turn. In fact, it is easier to recover from an overshoot than an undershoot, so we intentionally overshoot the 90 turn. 
+									We move turn in short bursts in order to prevent the robot from getting stuck "wiggling". If the robot was allowed to constantly turn while orienting itself towards the line, it almost always repeatedly misses the center, due to the robot turning faster than it can process the line detection.
+									We also nudge the robot forward slightly when doing a turn. We found this helps it get back on track, by preventing the robot from getting stuck in a wiggle.
+
+									For object detection, we use an ultrasonic sensor aimed forwards, hanging below the main chassis. We do not secure it other than the connecting wires. While this is not a great idea, it is very lightweight, and has no force exerted on it, while not needing to be precisely aimed.
+									This is simply called once every second or so, and its output has priority in the FSM to determine the next robot stage.
+									
+									For movement, we used two Parallax servos. These are controlled via PWM, and can report their current angle via an output PWM. 
+									We had to drill new holes in the chassis to accommodate then new servo mountings, and this resulted in an imperfect alignment. Our robot tends to veer to the left when it goes straight for a period of time. Thus, we rarely move for a long period of time, and instead move in short bursts to error correct. 
+									The Hall effect sensors which find the servo angle is also slightly inaccurate, and moving in shorter bursts helps mitigate issues that appear in longer runs.
+									Instead of using time to determine when the robot turns 90 degrees, or when it moves a certain distance, we use the rotation angle reported by the Hall sensors. This is more accurate than using time, as time depends on the servo strength and the traverse material.
+
+									We also used a PiTFT. We had some ideas to use to display / control the current robot state, but we ran out of time. It is currently used only to show the LAN IP of the robot, in order to SSH to the Pi.
+								
+									We power the Pi (and PiTFT, camera, and ultrasonic sensor) using a 5V rechargable battery pack. As we changed the robot around a bunch of times, we did not mount the battery pack, and kept it leashed with a long USB cable. The servos are powered using 4x AA batteries in series, as they need a higher voltage.
 								</p> <!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
@@ -174,7 +191,7 @@ Template for
 								<h2>Work Distribution</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p> Lawrence took care of the most of the hardware testinf and setup as well as the actual robot's "brain", whilst Xavier handled all of the iamge processing, graph creation, optimal path calculation and translation as well as the step by step visualization of the robot's position. We both equally participated in the debugging and testing of each iteration of our robot, proposing out ideas on how to improve it even on parts that we didn't directly code. 									<!--// Put Content here -->
+								<p> Lawrence took care of the most of the hardware testing and setup as well as the actual robot's "brain", whilst Xavier handled all of the iamge processing, graph creation, optimal path calculation and translation as well as the step by step visualization of the robot's position. We both equally participated in the debugging and testing of each iteration of our robot, proposing out ideas on how to improve it even on parts that we didn't directly code. 									<!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
 						
@@ -183,7 +200,7 @@ Template for
 								<h2>Git hub link:</h2> <!--// put your heading here -->
 							</div>
 							<div class="yui-u">
-								<p> All our code is open source, feem free to use it to tryan make your own robot our improve our current one! Here's a link to the github repo we created: 									<!--// Put Content here -->
+								<p> All our code is open source, feel free to use it to tryan make your own robot our improve our current one! Here's a link to the github repo we created: 									<!--// Put Content here -->
 							</div>
 						</div><!--// Your section has ended -->
 
